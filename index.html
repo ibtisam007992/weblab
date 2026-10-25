@@ -234,7 +234,17 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 .menus button:hover,.menus button.open{background:#505050}
 .wtitle{position:absolute;left:50%;transform:translateX(-50%);font-size:12px;color:var(--vs-dim);white-space:nowrap;pointer-events:none;max-width:40%;overflow:hidden;text-overflow:ellipsis}
 .wbtns{margin-left:auto;display:flex}
-.wbtns span{width:38px;text-align:center;color:var(--vs-dim)}
+.wbtns button{width:40px;height:100%;min-height:30px;border:0;background:transparent;color:var(--vs-dim);font:inherit;font-size:14px;cursor:pointer}
+.wbtns button:hover{background:rgba(255,255,255,.1);color:#fff}.wbtns .wx:hover{background:#e81123;color:#fff}
+.wbtns button:focus-visible,.wsplit:focus-visible{outline:2px solid #007acc;outline-offset:-2px}
+.wsplit{margin-left:auto;border:1px solid #3c3c3c;background:#2d2d2d;color:#ddd;border-radius:5px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.wsplit:hover{background:#37373d}.wsplit[aria-pressed="true"]{background:#007acc;border-color:#007acc;color:#fff}
+.wsplit:not([hidden])+.wbtns{margin-left:8px}
+body.vmax{overflow:hidden}
+body.vmax .vsc{position:fixed;inset:8px;z-index:80;height:auto!important;display:flex!important;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+body.vmax.vsplit .vsc{left:calc(40% + 4px)}
+body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(60% + 4px);z-index:80;height:auto!important;display:flex!important;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+@media (max-width:880px){body.vmax.vsplit .vsc{left:8px}body.vmax.vsplit .browser{display:none!important}.wsplit{display:none}}
 .dropdown{position:absolute;top:30px;background:#252526;border:1px solid #454545;box-shadow:0 4px 14px #0008;border-radius:5px;padding:4px;z-index:30;min-width:230px}
 .dropdown button{display:flex;justify-content:space-between;gap:20px;width:100%;background:none;border:0;padding:4px 18px;border-radius:3px;text-align:left;font-size:12.5px}
 .dropdown button:hover{background:var(--vs-sel)}
@@ -557,7 +567,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
           <button type="button" data-m="file">File</button><button type="button" data-m="edit">Edit</button><button type="button" data-m="sel">Selection</button><button type="button" data-m="view">View</button><button type="button" data-m="go">Go</button><button type="button" data-m="run">Run</button><button type="button" data-m="term">Terminal</button><button type="button" data-m="help">Help</button>
         </div>
         <div class="wtitle" id="wtitle">Welcome - Visual Studio Code</div>
-        <div class="wbtns" aria-hidden="true"><span>&#8212;</span><span>&#9633;</span><span>&#10005;</span></div>
+        <button type="button" class="wsplit" id="wSplit" hidden title="عرض المتصفح بجانب VS Code">⧉ المتصفح بجانبه</button><div class="wbtns"><button type="button" id="wMin" title="استعادة الحجم" aria-label="استعادة الحجم">&#8212;</button><button type="button" id="wMax" title="تكبير نافذة VS Code" aria-label="تكبير نافذة VS Code" aria-pressed="false">&#9633;</button><button type="button" id="wClose" class="wx" title="إغلاق" aria-label="إغلاق">&#10005;</button></div>
       </div>
       <div class="vbody">
         <div class="activity" data-part="activitybar" id="activity">
@@ -1400,8 +1410,8 @@ function newBTab(loc){const t={id:bseq++,hist:[],hi:-1,kind:'blank'};navTo(t,loc
 function openSite(ws,path,scheme,inNew){const loc={kind:'site',ws,path,scheme};const c=cur();if(!inNew&&c&&c.kind==='site'&&c.ws===ws&&c.scheme===scheme)navTo(c,loc);else{const ex=btabs.findIndex(t=>t.kind==='site'&&t.ws===ws&&t.path===path&&t.scheme===scheme);if(ex>=0&&!inNew)bactive=ex;else newBTab(loc)}renderBrowser()}
 function openInternal(page){const ex=btabs.findIndex(t=>t.kind==='internal'&&t.page===page);if(ex>=0)bactive=ex;else newBTab({kind:'internal',page});renderBrowser()}
 function htmlTargetForRun(){const a=activeFile();if(a&&a.t.ws!=='untitled'&&/\.html?$/i.test(a.t.path))return {ws:a.t.ws,path:a.t.path};if(a&&a.t.ws==='untitled')return 'untitled';const ws=curWs();if(F(ws,'index.html'))return {ws,path:'index.html'};const k=Object.keys(state.ws[ws].files).find(p=>/\.html?$/i.test(p));return k?{ws,path:k}:null}
-function goLive(){const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها.');return}liveOn=true;renderStatus();openSite(r.ws,r.path,'live');toast('Server is Started at port : 5500');if(innerWidth<=880)setView('browser');autoCheck()}
-function runActive(){const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('افتحي صفحة HTML أولاً.');return}openSite(r.ws,r.path,'file');if(innerWidth<=880)setView('browser')}
+function goLive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها.');return}liveOn=true;renderStatus();openSite(r.ws,r.path,'live');toast('Server is Started at port : 5500');if(innerWidth<=880)setView('browser');autoCheck()}
+function runActive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('افتحي صفحة HTML أولاً.');return}openSite(r.ws,r.path,'file');if(innerWidth<=880)setView('browser')}
 function reloadBrowserAfterSave(){refreshExternal();const c=cur();if(c&&c.kind==='site'){if(c.scheme==='file'){toast('حُفظ الملف. اضغطي زر التحديث ⟳ في المتصفح لرؤية التعديلات، أو استخدمي Go Live.',2600);renderBrowserChrome()}else renderBrowser()}else renderBrowserChrome()}
 
 function buildDoc(tab){const f=F(tab.ws,tab.path);if(!f)return '<p style="font-family:sans-serif;padding:20px">404 — File not found</p>';let h=annotate(f.saved);const tok='t'+tab.id;
@@ -1524,7 +1534,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'ce6fa6d2e84d',hash:'17d64e14af7a21ac1e47ba314422747239101e33d7bf60d3dcd6d850561de138'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'9c0b0db1d7cc',hash:'af1f768240eacbe523f25d2796d02894f33786bac33a078616a7835e02afed2a'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2021,6 +2031,21 @@ function syncPreviewHL(){const a=activeFile();const c=cur();const fr=vp.querySel
 $('#crLink').onclick=()=>{linkMode=!linkMode;$('#crLink').classList.toggle('on',linkMode);$('#crLink').setAttribute('aria-pressed',linkMode);
   toast(linkMode?'وضع الربط مفعّل: انقري أي جزء في الصفحة لتري سطره في الشفرة، وحرّكي المؤشر في المحرر لتري عنصره مظللاً في الصفحة.':'أُوقف وضع الربط.',5000);const fr=vp.querySelector('iframe');if(fr&&fr.contentDocument)fr.contentDocument.querySelectorAll('.__hov').forEach(x=>x.classList.remove('__hov'))};
 
+
+
+/* ---------- VS Code window: maximize / restore ---------- */
+function setVMax(on,split){document.body.classList.toggle('vmax',on);document.body.classList.toggle('vsplit',!!(on&&split));
+  const b=$('#wMax');b.setAttribute('aria-pressed',on);b.title=on?'استعادة الحجم':'تكبير نافذة VS Code';b.innerHTML=on?'&#10063;':'&#9633;';
+  const sp=$('#wSplit');sp.hidden=!on;sp.setAttribute('aria-pressed',!!(on&&split));
+  try{sessionStorage.setItem('mlab-vmax',on?(split?'2':'1'):'0')}catch(e){}
+  setTimeout(()=>{window.dispatchEvent(new Event('resize'));try{$('#ta').focus()}catch(e){}},30)}
+const vIsMax=()=>document.body.classList.contains('vmax');
+$('#wMax').onclick=()=>{if(vIsMax())setVMax(false);else{setVMax(true,false);toast('كُبّرت نافذة VS Code. للرجوع اضغطي ❏ أو انقري مرتين على شريط العنوان، ولرؤية صفحتك بجانبها اضغطي «⧉ المتصفح بجانبه».',4500)}};
+$('#wMin').onclick=()=>{if(vIsMax())setVMax(false);else toast('النافذة بحجمها العادي. اضغطي □ لتكبيرها.')};
+$('#wClose').onclick=()=>toast('لا يمكن إغلاق محاكي VS Code داخل المختبر 🙂');
+$('#wSplit').onclick=()=>setVMax(true,!document.body.classList.contains('vsplit'));
+$('.titlebar').addEventListener('dblclick',e=>{if(e.target.closest('button'))return;$('#wMax').click()});
+{let v='0';try{v=sessionStorage.getItem('mlab-vmax')||'0'}catch(e){}if(v!=='0')setVMax(true,v==='2')}
 
 /* ---------- external window (real browser tab) ---------- */
 let extWin=null,extTab=null;
