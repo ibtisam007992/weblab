@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>مختبر موقع مسندم</title>
+<title>صانعات الويب</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -528,7 +528,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
       <div class="brand-mark" aria-hidden="true">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>
       </div>
-      <div><h1>مختبر موقع محافظة مسندم</h1><small>تقنية المعلومات · الصف العاشر · وحدة تصميم مواقع الويب</small><small class="credit">إعداد المعلمة: ابتسام الرواس · مدرسة خولة بنت حكيم للبنات (٩–١٢)</small></div>
+      <div><h1>صانعات الويب</h1><small>مختبر مشروع موقع محافظة مسندم · تقنية المعلومات · الصف العاشر</small><small class="credit">إعداد المعلمة: ابتسام الرواس · مدرسة خولة بنت حكيم للبنات (٩–١٢)</small></div>
     </div>
     <div class="lessons" id="lessons" role="group" aria-label="الدروس"></div>
     <div class="barbtns">
@@ -1524,7 +1524,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'02dae68737b2',hash:'9d37a339b58d9c07edd92b8b9af7b97e0aa338fb4af9dbb72c0934b4053b71c9'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'ce6fa6d2e84d',hash:'17d64e14af7a21ac1e47ba314422747239101e33d7bf60d3dcd6d850561de138'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
