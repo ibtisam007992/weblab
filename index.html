@@ -460,6 +460,7 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 .galframe{width:100%;height:58vh;border:1px solid var(--line);border-radius:12px;background:#fff}
 .fb{display:flex;flex-direction:column;gap:6px;border:1px solid var(--sun);border-radius:12px;padding:10px}
 .fb small{color:var(--muted)}
+.extbig{display:flex;margin:14px auto 0;font-size:14px}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -618,7 +619,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
       <div class="crtool">
         <button type="button" id="crBack" title="رجوع"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <button type="button" id="crFwd" title="تقدم"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        <button type="button" id="crLink" title="ربط الصفحة بالشفرة" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button>
+        <button type="button" id="crExt" title="فتح الصفحة في نافذة خارجية" aria-label="فتح الصفحة في نافذة خارجية"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button><button type="button" id="crLink" title="ربط الصفحة بالشفرة" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button>
         <button type="button" id="crReload" title="إعادة تحميل"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
         <div class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" id="lockIc"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><input id="addr" spellcheck="false" aria-label="شريط العنوان"></div>
       </div>
@@ -1397,17 +1398,17 @@ function openInternal(page){const ex=btabs.findIndex(t=>t.kind==='internal'&&t.p
 function htmlTargetForRun(){const a=activeFile();if(a&&a.t.ws!=='untitled'&&/\.html?$/i.test(a.t.path))return {ws:a.t.ws,path:a.t.path};if(a&&a.t.ws==='untitled')return 'untitled';const ws=curWs();if(F(ws,'index.html'))return {ws,path:'index.html'};const k=Object.keys(state.ws[ws].files).find(p=>/\.html?$/i.test(p));return k?{ws,path:k}:null}
 function goLive(){const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها.');return}liveOn=true;renderStatus();openSite(r.ws,r.path,'live');toast('Server is Started at port : 5500');if(innerWidth<=880)setView('browser');autoCheck()}
 function runActive(){const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('افتحي صفحة HTML أولاً.');return}openSite(r.ws,r.path,'file');if(innerWidth<=880)setView('browser')}
-function reloadBrowserAfterSave(){const c=cur();if(c&&c.kind==='site'){if(c.scheme==='file'){toast('حُفظ الملف. اضغطي زر التحديث ⟳ في المتصفح لرؤية التعديلات، أو استخدمي Go Live.',2600);renderBrowserChrome()}else renderBrowser()}else renderBrowserChrome()}
+function reloadBrowserAfterSave(){refreshExternal();const c=cur();if(c&&c.kind==='site'){if(c.scheme==='file'){toast('حُفظ الملف. اضغطي زر التحديث ⟳ في المتصفح لرؤية التعديلات، أو استخدمي Go Live.',2600);renderBrowserChrome()}else renderBrowser()}else renderBrowserChrome()}
 
 function buildDoc(tab){const f=F(tab.ws,tab.path);if(!f)return '<p style="font-family:sans-serif;padding:20px">404 — File not found</p>';let h=annotate(f.saved);const tok='t'+tab.id;
   h=h.replace(/<link\b[^>]*>/gi,tag=>{const rel=/rel\s*=\s*["']?stylesheet/i.test(tag);const m=/\shref\s*=\s*["']([^"']+)["']/i.exec(tag);if(rel&&m){const ff=findFile(tab.ws,m[1]);if(ff)return `<style>${cssUrls(ff.f.saved)}</style>`}return tag});
   h=h.replace(/(\s(?:src)\s*=\s*)(["'])([^"']*)\2/gi,(m,p,q,v)=>{const a=assetFor(v);if(a)return p+q+absURL(a.uri)+q;if(/^images_videos\//i.test(v.trim()))return p+q+'missing:'+v+q;return m});
   h=h.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,(m,a,b,c)=>a+cssUrls(b)+c);
   h=h.replace(/(\sstyle\s*=\s*")([^"]*)"/gi,(m,a,b)=>a+cssUrls(b,true)+'"');
-  const inj=`<scr${''}ipt>(function(){document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;e.preventDefault();parent.postMessage({lab:'${tok}',type:'nav',href:a.getAttribute('href'),target:a.getAttribute('target')||''},'*');},true);})();<\/script>`;
+  const inj=`<scr${''}ipt>(function(){document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;e.preventDefault();(window.opener&&window.opener!==window?window.opener:parent).postMessage({lab:'${tok}',type:'nav',href:a.getAttribute('href'),target:a.getAttribute('target')||''},'*');},true);})();<\/script>`;
   return h+inj}
 function cssUrls(css,attr){return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi,(m,q,v)=>{const a=assetFor(v);return a?`url(${attr?"'":'"'}${absURL(a.uri)}${attr?"'":'"'})`:m})}
-window.addEventListener('message',e=>{const d=e.data;if(!d||!d.lab)return;const tab=btabs.find(t=>'t'+t.id===d.lab);if(!tab)return;
+window.addEventListener('message',e=>{const d=e.data;if(!d||!d.lab)return;if(d.lab==='tx'){extNav(d);return}const tab=btabs.find(t=>'t'+t.id===d.lab);if(!tab)return;
   if(d.type==='nav'){const href=(d.href||'').trim();if(!href||href[0]==='#')return;
     if(/^mailto:/i.test(href)){toast('سيفتح برنامج البريد الإلكتروني لإنشاء رسالة جديدة إلى: <b>'+esc(href.slice(7))+'</b>');return}
     if(/^(https?:)?\/\//i.test(href)){const u=href.toLowerCase();if(/freenom/.test(u))return openInternal('freenom');if(/drive\.google/.test(u))return openInternal('drive');if(/drv\.tw/.test(u))return openInternal('drv');toast('رابط مطلق إلى موقع خارجي: '+esc(href)+' — يعمل عند الاتصال بالإنترنت.');return}
@@ -1421,7 +1422,7 @@ function renderBrowserChrome(){
   $('#lockIc').innerHTML=c&&(c.kind==='internal'||c.scheme==='pub')?'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>':'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>';
   $('#crBack').disabled=!c||c.hi<=0;$('#crFwd').disabled=!c||c.hi>=c.hist.length-1}
 function renderBrowser(){renderBrowserChrome();const c=cur();
-  if(!c||c.kind==='blank'){vp.innerHTML=`<div class="blank"><div><b>لا توجد صفحة معروضة</b>احفظي صفحتك ثم انقري <span class="golivechip">((·)) Go Live</span> في شريط حالة VS Code، أو اكتبي اسم الصفحة في شريط العنوان.</div></div>`;return}
+  if(!c||c.kind==='blank'){vp.innerHTML=`<div class="blank"><div><b>لا توجد صفحة معروضة</b>احفظي صفحتك ثم انقري <span class="golivechip">((·)) Go Live</span> في شريط حالة VS Code، أو اكتبي اسم الصفحة في شريط العنوان.<button class="btn primary extbig" type="button" id="extBig">↗ عرض صفحتي في نافذة خارجية</button></div></div>`;$('#extBig').onclick=()=>openExternal();return}
   if(c.kind==='internal'){vp.innerHTML=`<div class="internal" id="internal"></div>`;renderInternal(c.page);return}
   const f=F(c.ws,c.path);if(!f){vp.innerHTML=`<div class="blank"><div><b>${c.scheme==='file'?'Your file couldn\u2019t be accessed':'Cannot GET /'+esc(c.path)}</b>لم يُعثر على الصفحة <code dir="ltr">${esc(c.path)}</code>. تأكدي من اسم الملف في سمة href ومن حفظه في مجلد الموقع.</div></div>`;return}
   vp.innerHTML='';const fr=document.createElement('iframe');fr.setAttribute('sandbox','allow-scripts allow-same-origin');fr.title='معاينة '+c.path;fr.dataset.v=String(Date.now());fr.onload=()=>wireFrame(fr,c);fr.srcdoc=buildDoc(c);vp.appendChild(fr)}
@@ -1519,7 +1520,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'73d6e3711cd2',hash:'ad4ff7c9b1462b20adcc66e0a95c8d1135174c413e2d00789d04ac6669d45082'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'5dbe97ecfb9e',hash:'ac7fb7da9c5c232ed0e521a41f1c944a0b9e819c5b955b842c34a960d956c5ab'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2015,6 +2016,27 @@ function syncPreviewHL(){const a=activeFile();const c=cur();const fr=vp.querySel
   d.querySelectorAll('[data-hl]').forEach(x=>x.removeAttribute('data-hl'));const els=d.querySelectorAll('[data-l="'+ln+'"]');els.forEach(x=>x.setAttribute('data-hl',''));if(els[0]&&els[0].scrollIntoView)try{els[0].scrollIntoView({block:'nearest'})}catch(e){}}
 $('#crLink').onclick=()=>{linkMode=!linkMode;$('#crLink').classList.toggle('on',linkMode);$('#crLink').setAttribute('aria-pressed',linkMode);
   toast(linkMode?'وضع الربط مفعّل: انقري أي جزء في الصفحة لتري سطره في الشفرة، وحرّكي المؤشر في المحرر لتري عنصره مظللاً في الصفحة.':'أُوقف وضع الربط.',5000);const fr=vp.querySelector('iframe');if(fr&&fr.contentDocument)fr.contentDocument.querySelectorAll('.__hov').forEach(x=>x.classList.remove('__hov'))};
+
+
+/* ---------- external window (real browser tab) ---------- */
+let extWin=null,extTab=null;
+function extHTML(){const f=F(extTab.ws,extTab.path);if(!f)return '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>404</title></head><body style="font-family:Tahoma,sans-serif;padding:30px"><h1>404</h1><p>لم يُعثر على الصفحة <code>'+esc(extTab.path)+'</code>. تأكدي من اسم الملف في سمة href ومن حفظه.</p></body></html>';
+  let h=buildDoc(extTab);if(!/<meta[^>]+charset/i.test(h))h=h.replace(/<head[^>]*>/i,m=>m+'<meta charset="utf-8">');return h}
+function writeExt(keepScroll){if(!extWin||extWin.closed)return false;let y=0;try{y=keepScroll?extWin.scrollY:0}catch(e){}
+  try{const d=extWin.document;d.open();d.write(extHTML());d.close();if(y)setTimeout(()=>{try{extWin.scrollTo(0,y)}catch(e){}},30);try{extWin.focus()}catch(e){}return true}catch(e){return false}}
+function openExternal(){let c=cur();let tgt=null;
+  if(c&&c.kind==='site'&&F(c.ws,c.path))tgt={ws:c.ws,path:c.path};else{const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها. احفظي صفحتك أولاً.');return}tgt=r}
+  if(!extWin||extWin.closed){try{extWin=window.open('','mlab_page')}catch(e){extWin=null}}
+  if(!extWin){toast('منع المتصفح فتح النافذة الخارجية. اسمحي بالنوافذ المنبثقة لهذا الموقع ثم أعيدي المحاولة.',5000);return}
+  extTab={id:'x',ws:tgt.ws,path:tgt.path,scheme:'live',hist:[],hi:-1};
+  if(!writeExt(false)){toast('تعذّر عرض الصفحة في نافذة خارجية من هذا العرض.',4000);return}
+  toast('↗ فُتحت صفحتك في نافذة خارجية؛ تتحدّث تلقائياً كلما حفظتِ (Ctrl+S).',3500)}
+function refreshExternal(){if(extWin&&!extWin.closed&&extTab)writeExt(true)}
+function extNav(d){if(!extWin||extWin.closed||!extTab)return;const href=(d.href||'').trim();if(!href||href[0]==='#')return;
+  if(/^mailto:/i.test(href)){toast('سيفتح برنامج البريد الإلكتروني لإنشاء رسالة جديدة إلى: <b>'+esc(href.slice(7))+'</b>');return}
+  if(/^(https?:)?\/\//i.test(href)){try{extWin.location.href=href}catch(e){}return}
+  const ff=findFile(extTab.ws,href.split('#')[0].split('?')[0]);extTab.path=ff?ff.path:href;writeExt(false)}
+$('#crExt').onclick=()=>openExternal();
 
 /* ---------- teacher: difficulty analysis ---------- */
 function drawAnalysis(b,rows){if(!rows.length){b.innerHTML='<p style="margin-top:14px">لا توجد نتائج للتحليل بعد.</p>';return}
