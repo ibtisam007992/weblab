@@ -461,6 +461,7 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 .fb{display:flex;flex-direction:column;gap:6px;border:1px solid var(--sun);border-radius:12px;padding:10px}
 .fb small{color:var(--muted)}
 .extbig{display:flex;margin:14px auto 0;font-size:14px}
+.actnote{font-size:12.5px;margin:6px 0 0;background:var(--teal-soft);border-radius:10px;padding:6px 10px}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -964,7 +965,10 @@ const MAXPTS=CORE.reduce((a,t)=>a+pts(t),0);
 const earnedOf=L=>T.filter(t=>(!L||t.L===L)&&state.done[t.id]===true).reduce((a,t)=>a+Math.max(0,pts(t)-0.5*paidHints(t)),0);
 const bonusOf=()=>T.filter(t=>t.challenge&&state.done[t.id]===true).reduce((a,t)=>a+Math.max(0,pts(t)-0.5*paidHints(t)),0);
 const maxOf=L=>CORE.filter(t=>t.L===L).reduce((a,t)=>a+pts(t),0);
-const grade20=()=>Math.min(20,Math.round(earnedOf()/MAXPTS*40)/2);
+function actLessons(){return LESSONS.filter(l=>l.n<=5&&(lessonOpen(l.n)||T.some(t=>t.L===l.n&&(state.done[t.id]||(state.att[t.id]||{}).n)))).map(l=>l.n)}
+const curMax=()=>actLessons().reduce((s,n)=>s+maxOf(n),0)||maxOf(1);
+const coreEarned=()=>CORE.filter(t=>t.L<=5&&state.done[t.id]===true).reduce((a,t)=>a+Math.max(0,pts(t)-0.5*paidHints(t)),0);
+const grade20=()=>Math.min(20,Math.round(coreEarned()/curMax()*40)/2);
 const MAX_ATT=3;
 let cfg={timeFactor:1,plan:[]};
 let dbPlanLoaded=false;
@@ -1016,7 +1020,7 @@ const doneCount=L=>coreOf(L).filter(t=>state.done[t.id]).length;
 /* ================= LAB BAR ================= */
 function renderBar(){
   const td=todayLesson();$('#lessons').innerHTML=LESSONS.map(l=>{const op=lessonOpen(l.n);return `<button type="button" class="lchip ${op?'':'closed'} ${td===l.n?'today':''}" data-l="${l.n}" aria-pressed="${state.lesson===l.n}" ${op?'':'aria-disabled="true" title="مغلق حتى تفتحه المعلمة"'}>${chipInner(l,op)}${td===l.n?'<span class="tag">اليوم</span>':''}</button>`}).join('');
-  $('#scoreTxt').textContent=ar(earnedOf())+' / '+ar(MAXPTS);if(typeof renderXP==='function')try{renderXP()}catch(e){}
+  $('#scoreTxt').textContent=ar(earnedOf())+' / '+ar(curMax());$('#scoreTxt').title='النقاط من الدروس المفتوحة لكِ حتى الآن: '+actLessons().map(ar).join('، ');if(typeof renderXP==='function')try{renderXP()}catch(e){}
   $('#studentBtn').textContent=state.student.name?((state.student.av||'🌸')+' '+state.student.name):'اكتبي اسمك';
   $('#teacherBtn').classList.toggle('on',teacherOn);$('#teacherBtn').setAttribute('aria-pressed',teacherOn);$('#teacherBtn').textContent=teacherOn?'🔓 واجهة المعلمة':'🔒 واجهة المعلمة';
 }
@@ -1508,7 +1512,7 @@ function openChooser(){const ix=loadIdx();const list=ix.list.slice().sort((a,b)=
   $('#mbox').querySelector('.who').onclick=ev=>{const b=ev.target.closest('[data-pid]');if(!b)return;closeModal();if(b.dataset.pid!==state.pid)switchTo(b.dataset.pid)};
   $('#newStu').onclick=()=>{closeModal();newStudent()};const em=$('#editMe');if(em)em.onclick=()=>openStudent()}
 function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0),0);const secs=T.filter(t=>state.done[t.id]===true).reduce((s,t)=>s+((state.att[t.id]||{}).spent||0),0);
-  return {av:avatarOf(),bd:Object.keys(state.badges||{}).length,team:state.student.team||'',partner:(state.pair&&state.pair.name)||'',path:state.support?'sup':advUnlocked()?'adv':'',tps:Object.fromEntries(Object.entries(state.tps||{}).filter(([k,v])=>v.s2).map(([k,v])=>[k,(v.a2||'').slice(0,400)])),sl:state.self||{},kw:state.kwl||{},en:Object.fromEntries(Object.entries(state.entry||{}).map(([k,v])=>[k,v.s])),xe:state.expert||null,ad:T.filter(t=>t.adv&&state.done[t.id]===true).length,name:state.student.name,cls:state.student.cls,school:state.student.school||SCHOOL,points:earnedOf(),max:MAXPTS,grade20:grade20(),
+  return {av:avatarOf(),bd:Object.keys(state.badges||{}).length,team:state.student.team||'',partner:(state.pair&&state.pair.name)||'',path:state.support?'sup':advUnlocked()?'adv':'',tps:Object.fromEntries(Object.entries(state.tps||{}).filter(([k,v])=>v.s2).map(([k,v])=>[k,(v.a2||'').slice(0,400)])),sl:state.self||{},kw:state.kwl||{},en:Object.fromEntries(Object.entries(state.entry||{}).map(([k,v])=>[k,v.s])),xe:state.expert||null,ad:T.filter(t=>t.adv&&state.done[t.id]===true).length,name:state.student.name,cls:state.student.cls,school:state.student.school||SCHOOL,points:earnedOf(),max:curMax(),grade20:grade20(),
   tasksDone:CORE.filter(t=>state.done[t.id]===true).length,helped:T.filter(t=>state.done[t.id]==='help').length,tasks:TOTAL,bonus:bonusOf(),
   tstat:T.map(t=>{const d=state.done[t.id],a=state.att[t.id]||{};return d===true?String(Math.min(9,a.n||1)):d==='help'?'h':a.status==='locked'?'x':(a.n?'f':'-')}).join(''),hstat:T.map(t=>String(Math.min(9,(state.hints||{})[t.id]||0))).join(''),
   mk:Object.fromEntries(Object.entries(state.mist||{}).filter(([k])=>!k.startsWith('task:')).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>[k,v.n])),
@@ -1520,7 +1524,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'5dbe97ecfb9e',hash:'ac7fb7da9c5c232ed0e521a41f1c944a0b9e819c5b955b842c34a960d956c5ab'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'02dae68737b2',hash:'9d37a339b58d9c07edd92b8b9af7b97e0aa338fb4af9dbb72c0934b4053b71c9'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1551,17 +1555,17 @@ async function sendResult(btn,box){
   if(!state.student.name){openStudent(openResult);return}
   btn.disabled=true;btn.textContent='جارٍ الإرسال…';
   const r=await pushResult();
-  if(r.ok){box.innerHTML=`<div class="feedback ok">✓ وصلت نتيجتك إلى المعلمة: ${ar(earnedOf())} / ${ar(MAXPTS)} نقطة. تُرسل النتيجة تلقائياً أيضاً بعد كل مهمة.</div>`;btn.textContent='إعادة إرسال النتيجة';btn.disabled=false;return}
+  if(r.ok){box.innerHTML=`<div class="feedback ok">✓ وصلت نتيجتك إلى المعلمة: ${ar(earnedOf())} / ${ar(curMax())} نقطة. تُرسل النتيجة تلقائياً أيضاً بعد كل مهمة.</div>`;btn.textContent='إعادة إرسال النتيجة';btn.disabled=false;return}
   const c=r.code;const msg=c==='unavailable'?'تعذّر الاتصال بسجل النتائج من هذا العرض (افتحي الصفحة وأنتِ مسجّلة الدخول في Claude).':c==='no_user'?'تعذّر التعرف على حسابك؛ سجّلي الدخول ثم حاولي مرة أخرى.':c==='permission_denied'||c==='not_granted'?'لا تملكين صلاحية الإرسال في هذا الرابط؛ اطلبي من المعلمة مشاركته بصلاحية «مساهم».':c==='rate_limited'?'محاولات كثيرة؛ انتظري قليلاً ثم أعيدي الإرسال.':'لم يكتمل الإرسال ('+esc(c)+').';
   showCodeBox(box,msg);btn.disabled=false;btn.textContent='إرسال النتيجة للمعلمة'}
-function openResult(){const d=CORE.filter(t=>state.done[t.id]===true).length,hp=T.filter(t=>state.done[t.id]==='help').length;const pct=Math.round(earnedOf()/MAXPTS*100);const e=resultEntry();
+function openResult(){const d=CORE.filter(t=>state.done[t.id]===true).length,hp=T.filter(t=>state.done[t.id]==='help').length;const pct=Math.round(coreEarned()/curMax()*100);const e=resultEntry();
   const lvl=pct>=90?'متقنة بامتياز':pct>=75?'متقنة':pct>=50?'في طور الإتقان':'تحتاج إلى متابعة';
   const date=new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
   modal(`<h2>بطاقة نتيجة التطبيق العملي</h2><p style="color:var(--muted);margin:0">وحدة تصميم مواقع الويب · مشروع موقع محافظة مسندم</p>
   <table class="rtable"><tr><th>الطالبة</th><td>${esc(state.student.name||'— لم يُكتب الاسم —')}</td></tr><tr><th>الصف</th><td>${esc(state.student.cls)}</td></tr><tr><th>المدرسة</th><td>${esc(state.student.school||SCHOOL)}</td></tr><tr><th>التاريخ</th><td>${date}</td></tr></table>
-  <div class="bigscore"><b>${ar(earnedOf())} / ${ar(MAXPTS)}</b><span>نقطة · الدرجة ${ar(grade20())} من ٢٠ · <strong>${lvl}</strong></span></div>
+  <div class="bigscore"><b>${ar(earnedOf())} / ${ar(curMax())}</b><span>نقطة · الدرجة ${ar(grade20())} من ٢٠ · <strong>${lvl}</strong></span></div><p class="actnote">📘 تُحسب نقاطكِ ودرجتكِ من الدروس التي فُتحت لكِ حتى الآن فقط: ${actLessons().map(n=>'الدرس '+ar(n)).join('، ')}. كلما فُتح درس جديد تُضاف نقاطه.</p>
   <p style="font-size:12.5px;color:var(--muted);margin:4px 0 0">المهام المنجزة ${ar(d)} من ${ar(TOTAL)}${hp?` · ${ar(hp)} بعرض الحل (بدون نقاط)`:''}${e.locked?` · ${ar(e.locked)} مغلقة بعد ٣ محاولات`:''} · المحاولات المستخدمة ${ar(e.attempts)} · وقت الإنجاز ${fmtSec(e.timeSec)} دقيقة. المهمة نقطتان، والنشاط ٣ نقاط، والمشروع ٦، وكل تلميح ينقص نصف نقطة.${bonusOf()?' نقاط التحديات الإضافية: '+ar(bonusOf())+'.':''}${Object.keys(state.exit||{}).length?' بطاقات الخروج: '+Object.entries(state.exit).map(([k,v])=>'د'+ar(k)+' '+ar(v.s)+'/٣').join('، ')+'.':''}</p>
-  <table class="rtable"><thead><tr><th>الدرس</th><th>النقاط</th><th>المهام</th><th></th></tr></thead><tbody>${LESSONS.map(l=>{const n=coreOf(l.n).length,c=doneCount(l.n);return `<tr><td>${ar(l.n)}. ${l.title}</td><td class="n">${ar(earnedOf(l.n))} / ${ar(maxOf(l.n))}</td><td class="n">${ar(c)} / ${ar(n)}</td><td><div class="bar"><i style="width:${earnedOf(l.n)/(maxOf(l.n)||1)*100}%"></i></div></td></tr>`}).join('')}</tbody></table>
+  <table class="rtable"><thead><tr><th>الدرس</th><th>النقاط</th><th>المهام</th><th></th></tr></thead><tbody>${LESSONS.filter(l=>actLessons().includes(l.n)).map(l=>{const n=coreOf(l.n).length,c=doneCount(l.n);return `<tr><td>${ar(l.n)}. ${l.title}</td><td class="n">${ar(earnedOf(l.n))} / ${ar(maxOf(l.n))}</td><td class="n">${ar(c)} / ${ar(n)}</td><td><div class="bar"><i style="width:${earnedOf(l.n)/(maxOf(l.n)||1)*100}%"></i></div></td></tr>`}).join('')}</tbody></table>
   <div class="actions"><button class="btn primary" type="button" id="sendRes" hidden>${state.sentAt?'إعادة إرسال النتيجة':'إرسال النتيجة للمعلمة'}</button><button class="btn" type="button" id="msgRes">نسخ رسالة النتيجة للمعلمة</button>${state.student.name?'':'<button class="btn" type="button" id="rsName">كتابة اسم الطالبة</button>'}<button class="btn" type="button" data-close-modal>إغلاق</button></div>
   <div id="sendBox">${state.sentAt?`<p style="font-size:12.5px;color:var(--muted)">آخر إرسال: ${new Date(state.sentAt).toLocaleString('ar-OM')} — تُرسل النتيجة تلقائياً بعد كل مهمة.</p>`:''}</div>`);
   const b=$('#rsName');if(b)b.onclick=()=>openStudent(openResult);
