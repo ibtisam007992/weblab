@@ -1535,7 +1535,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'f4c8c87ef3f3',hash:'b726374c5c823a9ed190b2a1b21187f6b15eb1e7f4212435e1f151d5e240ce52'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'aea40d35a227',hash:'877edbf50c1affac742f101f219583c3c177be0b7d5531c0420cf5299a6349a4'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1543,7 +1543,23 @@ const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'f4c8c87ef3f3
  return {doc(p){return {get:async()=>snap(p),set:async d=>wr(p,JSON.parse(JSON.stringify(d))),update:async d=>{const c=rd(p);if(!c)throw {code:'not_found'};wr(p,Object.assign({},c,JSON.parse(JSON.stringify(d))))},
    onSnapshot(cb){const f=()=>cb(snap(p));subs.push(f);setTimeout(f,0);return()=>{}}}},
   collection(c){return {onSnapshot(cb){const f=()=>cb({docs:keys(c).filter(k=>k.split('/').length===2).map(snap)});subs.push(f);setTimeout(f,0);return()=>{}}}}}})();
-function caps(){if(STANDALONE)return Promise.resolve([teacherOn?LDB:null,null]);if(!capsP){const use=n=>(window.claude&&typeof window.claude.use==='function')?window.claude.use(n).catch(()=>null):Promise.resolve(null);capsP=Promise.all([use('db'),use('user')])}return capsP}
+const FBCFG={"apiKey":"AIzaSyBklPxvTUO5MbCFzAIF2t1MVg-vxWU7sx4","authDomain":"sanaat-alweb.firebaseapp.com","projectId":"sanaat-alweb","storageBucket":"sanaat-alweb.firebasestorage.app","messagingSenderId":"463860534292","appId":"1:463860534292:web:dc17ae6c6bd202313fab01"};
+const FB=(()=>{if(!STANDALONE||!FBCFG)return null;let ready=null,fs=null,uid=null;const V='10.12.2';
+ const load=src=>new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=rej;document.head.appendChild(el)});
+ function init(){if(!ready)ready=(async()=>{const b='https://www.gstatic.com/firebasejs/'+V+'/';await load(b+'firebase-app-compat.js');await Promise.all([load(b+'firebase-auth-compat.js'),load(b+'firebase-firestore-compat.js')]);
+   const app=firebase.initializeApp(FBCFG);fs=firebase.firestore();try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
+   const cred=firebase.auth().currentUser||await new Promise(r=>{const u=firebase.auth().onAuthStateChanged(x=>{u();r(x)})})||(await firebase.auth().signInAnonymously()).user;uid=cred.uid;return true})().catch(e=>{console.warn('firebase',e);return false});return ready}
+ const withT=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(false),ms))]);
+ const FDB={doc(p){const r=()=>fs.doc(p);return {get:()=>r().get(),set:d=>r().set(d),update:d=>r().update(d),onSnapshot:(cb,er)=>r().onSnapshot(cb,er||(()=>{}))}},
+   collection(c){return {onSnapshot:(cb,er)=>fs.collection(c).onSnapshot(cb,er||(()=>{}))}}};
+ const HY={doc(p){if(/^results(\/|$)/.test(p))return FDB.doc(p);if(/^config\//.test(p)&&!teacherOn)return {get:async()=>({exists:false,data:()=>undefined}),set:async()=>{},update:async()=>{},onSnapshot:()=>()=>{}};return LDB.doc(p)},
+   collection(c){return c==='results'?FDB.collection(c):LDB.collection(c)}};
+ const USER={id:async()=>uid,isOwner:async()=>false};
+ return {async caps(){const ok=await withT(init(),9000);return ok?[HY,USER]:null},
+  async teacher(){const ok=await withT(init(),9000);if(!ok)return false;let k='';try{k=sessionStorage.getItem('mlab-tk')||''}catch(e){}
+   try{const ref=fs.doc('teachers/'+uid);const s=await ref.get();if(s.exists)return true;if(!k)return false;await ref.set({k,at:new Date().toISOString()});return true}catch(e){console.warn('teacher',e);return false}}}})();
+let fbTeacherOK=false;
+async function caps(){if(STANDALONE){if(FB){const c=await FB.caps();if(c){if(teacherOn&&!fbTeacherOK)fbTeacherOK=await FB.teacher();return c}}return [teacherOn?LDB:null,null]}if(!capsP){const use=n=>(window.claude&&typeof window.claude.use==='function')?window.claude.use(n).catch(()=>null):Promise.resolve(null);capsP=Promise.all([use('db'),use('user')])}return capsP}
 function summaryText(){const e=resultEntry();return `نتيجة التطبيق العملي — وحدة تصميم مواقع الويب\nالطالبة: ${e.name||'—'}\nالصف: ${e.cls}\nالمدرسة: ${e.school}\nالنقاط: ${e.points} / ${e.max}\nالدرجة: ${e.grade20} / 20\nالمهام المنجزة: ${e.tasksDone} / ${e.tasks}${e.helped?` (و${e.helped} بعرض الحل)`:''}\nالمحاولات المستخدمة: ${e.attempts} · الوقت: ${fmtSec(e.timeSec)} دقيقة\n`+e.lessons.map(l=>`الدرس ${l.n}: ${l.points}/${l.max} نقطة`).join('\n')+`\nالتاريخ: ${new Date().toLocaleString('ar-OM')}`}
 const RSECRET='mlab:musandam:ibtisam-alrawas:khawla-bint-hakeem';
 function fnv(str){let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36)}
@@ -1598,7 +1614,7 @@ async function openTeacher(){if(teacherOn){openTeacherPanel();return}
   $('#pinIn').focus();
   $('#pinForm').onsubmit=async ev=>{ev.preventDefault();const msg=$('#pinMsg');if(Date.now()<pinLockUntil){msg.innerHTML='<div class="feedback bad">محاولات كثيرة؛ انتظري دقيقة ثم أعيدي المحاولة.</div>';return}
     const v=$('#pinIn').value.trim();const d=snap&&snap.exists?snap.data():null;
-    if(d&&d.hash&&await sha(d.salt+':'+v)===d.hash){pinFails=0;tView='board';setTeacher(true);openTeacherPanel();return}
+    if(d&&d.hash&&await sha(d.salt+':'+v)===d.hash){pinFails=0;try{sessionStorage.setItem('mlab-tk',v)}catch(e){}fbTeacherOK=false;tView='board';setTeacher(true);openTeacherPanel();return}
     pinFails++;if(pinFails>=5){pinLockUntil=Date.now()+60000;pinFails=0}msg.innerHTML='<div class="feedback bad">الرقم السري غير صحيح.</div>';$('#pinIn').select()}}
 function pinSetup(db,change){modal(`<h2>${change?'تغيير الرقم السري':'إنشاء رقم سري للمعلمة'}</h2><p style="color:var(--muted);margin:0">${change?'':'هذه أول مرة تفتحين فيها واجهة المعلمة. '}اختاري رقماً من ٤ إلى ٨ أرقام. لا تستطيع الطالبات فتح الواجهة بدونه.</p>
   <form id="pinSet"><label>الرقم السري<input id="p1" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></label><label>أعيدي كتابة الرقم السري<input id="p2" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></label><div class="actions" style="margin-top:14px"><button class="btn primary" type="submit">حفظ الرقم السري</button><button class="btn" type="button" data-close-modal>إلغاء</button></div><div id="pinMsg"></div></form>`);
@@ -1611,7 +1627,7 @@ function pinSetup(db,change){modal(`<h2>${change?'تغيير الرقم السر
 
 let dashRows=[],dashUnsub=null,dashCls='',tView='board',planCls='*';
 async function openTeacherPanel(){if(!teacherOn){openTeacher();return}const [db]=await caps();if(!db){toast('سجل النتائج غير متاح في هذا العرض.');return}
-  modal(`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><div><h2>واجهة المعلمة</h2><p style="color:var(--muted);margin:0">${STANDALONE?'الصقي رسائل نتائج الطالبات في تبويب «استيراد رسائل النتائج». تُحفظ النتائج في متصفح هذا الجهاز فقط.':'تصل نتائج الطالبات تلقائياً بعد كل مهمة.'}</p></div><button class="btn" type="button" data-close-modal>إغلاق</button></div>
+  modal(`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><div><h2>واجهة المعلمة</h2><p style="color:var(--muted);margin:0">${STANDALONE?(FB?'🔴 مباشر: تصل نتائج الطالبات فوراً بعد كل مهمة. ويمكنكِ أيضاً استيراد رسائل النتائج.':'الصقي رسائل نتائج الطالبات في تبويب «استيراد رسائل النتائج». تُحفظ النتائج في متصفح هذا الجهاز فقط.'):'تصل نتائج الطالبات تلقائياً بعد كل مهمة.'}</p></div><button class="btn" type="button" data-close-modal>إغلاق</button></div>
   <div class="tabsrow" role="tablist"><button type="button" role="tab" data-tv="board">لوحة المتميزات</button><button type="button" role="tab" data-tv="table">جدول النتائج</button><button type="button" role="tab" data-tv="analysis">تحليل الصعوبة</button><button type="button" role="tab" data-tv="reflect">التأملات</button><button type="button" role="tab" data-tv="projects">المشاريع</button><button type="button" role="tab" data-tv="import">استيراد رسائل النتائج</button><button type="button" role="tab" data-tv="settings">الإعدادات</button></div><div id="dashBody"><p>جارٍ التحميل…</p></div>`);$('#mbox').classList.add('wide');
   $('#mbox').querySelector('.tabsrow').onclick=ev=>{const b=ev.target.closest('[data-tv]');if(b){tView=b.dataset.tv;drawTeacher()}};
   if(!dashUnsub)dashUnsub=db.collection('results').onSnapshot(snap=>{dashRows=[];snap.docs.forEach(d=>{const o=d.data()||{};if(d.id==='rubric'){rubricData=o;return}Object.values(o).forEach(e=>{if(e&&typeof e==='object'&&e.name)dashRows.push(e)})});if(tView!=='import'&&tView!=='settings'&&tView!=='projects')drawTeacher()},err=>{const b=$('#dashBody');if(b)b.innerHTML=`<div class="feedback bad">تعذّر قراءة النتائج (${esc(err&&err.code||'خطأ')}). تظهر النتائج لحساب صاحبة المختبر فقط.</div>`;dashUnsub=null});
