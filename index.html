@@ -523,6 +523,11 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
 }
 #brBtn[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal)}
 @media (max-width:880px){#brBtn,#layoutBtn{display:none!important}}
+.hello{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--teal-soft),var(--lav-soft));border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin-bottom:10px}
+.hav{font-size:30px;line-height:1;background:var(--surface);border-radius:50%;width:46px;height:46px;display:grid;place-items:center;box-shadow:0 2px 8px #0001;flex:none}
+.htxt{display:flex;flex-direction:column;min-width:0;flex:1}.htxt small{color:var(--muted);font-size:12px}.htxt b{font-family:var(--font-display);font-size:20px;line-height:1.2;color:var(--teal)}
+.htxt span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hout{flex:none;font-size:13px;padding:6px 12px}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1111,7 +1116,7 @@ function renderMission(){
   const openBtn=t.open?`<button class="btn" type="button" data-open="${t.open}">افتحي ${{freenom:'www.freenom.com',drive:'drive.google.com',drv:'www.drv.tw'}[t.open]}</button>`:'';
   const partsBtn=t.type==='parts'?`<button class="btn" type="button" data-showwelcome>إظهار الشاشة الترحيبية</button>`:'';
   $('#mission').innerHTML=`
-  <div class="mhead"><div class="eyebrow">${todayLesson()===L.n?'📌 الدرس المطلوب اليوم · ':''}${L.n===6?'🚀 مسار إثرائي للمجيدات':'الدرس '+ar(L.n)+' · كتاب الطالب ص '+L.pages}</div><h2>${L.title}</h2><p>${L.goal}</p>
+  <div class="mhead">${helloCard()}<div class="eyebrow">${todayLesson()===L.n?'📌 الدرس المطلوب اليوم · ':''}${L.n===6?'🚀 مسار إثرائي للمجيدات':'الدرس '+ar(L.n)+' · كتاب الطالب ص '+L.pages}</div><h2>${L.title}</h2><p>${L.goal}</p>
    ${teacherOn?`<div class="tstrip"><b>واجهة المعلمة مفتوحة على هذا الجهاز</b><span>زر «عرض الحل» ظاهر في كل مهمة، والمهمة المحلولة به تُحتسب بصفر نقاط. اخرجي من الواجهة قبل أن تستخدم طالبة هذا الجهاز.</span><div class="actions"><button class="btn primary" type="button" id="tDash">لوحة المتميزات والنتائج</button><button class="btn" type="button" id="tOff">خروج من واجهة المعلمة</button></div></div>`:''}
    ${state.student.name?'':`<div class="tstrip" style="border-color:var(--teal);background:var(--teal-soft)"><span>اكتبي اسمك وصفك قبل بدء المهام لتصل نتيجتك إلى المعلمة.</span><div class="actions"><button class="btn primary" type="button" id="needName">كتابة الاسم</button></div></div>`}
    ${pairStrip()}${diffStrip()}${entryDue(L.n)?'<div class="entstrip">🔁 ابدئي ببطاقة الدخول: سؤالان من الدرس السابق <button class="btn primary" type="button" id="entBtn">ابدئي</button></div>':''}
@@ -1570,9 +1575,9 @@ function openChooser(){const ix=loadIdx();const list=ix.list.slice().sort((a,b)=
   const ago=ms=>{const d=Math.round((Date.now()-ms)/60000);return d<60?'قبل '+ar(Math.max(1,d))+' دقيقة':d<1440?'قبل '+ar(Math.round(d/60))+' ساعة':'قبل '+ar(Math.round(d/1440))+' يوم'};
   modal(`<h2>من أنتِ؟</h2><p style="color:var(--muted);margin:0">اختاري اسمك لتكملي عملك من حيث توقفتِ، أو ابدئي كطالبة جديدة على هذا الجهاز.</p>
   <div class="who">${list.map(x=>`<button type="button" class="whob ${x.id===state.pid?'me':''}" data-pid="${x.id}"><b>${x.av||'🌸'} ${esc(x.name)}</b><small>${esc(x.cls||'')}</small><small>${x.id===state.pid?'مفتوح الآن':'آخر استخدام '+ago(x.last||Date.now())}</small></button>`).join('')}</div>
-  <div class="actions" style="margin-top:14px"><button class="btn primary" type="button" id="newStu">أنا طالبة جديدة على هذا الجهاز</button>${state.pid?'<button class="btn" type="button" id="editMe">تعديل بياناتي</button>':''}</div>`);
+  <div class="actions" style="margin-top:14px"><button class="btn primary" type="button" id="newStu">أنا طالبة جديدة على هذا الجهاز</button>${state.pid?'<button class="btn" type="button" id="editMe">تعديل بياناتي</button><button class="btn warn" type="button" id="outMe">↩ تسجيل الخروج</button>':''}</div>`);
   $('#mbox').querySelector('.who').onclick=ev=>{const b=ev.target.closest('[data-pid]');if(!b)return;closeModal();if(b.dataset.pid!==state.pid)switchTo(b.dataset.pid)};
-  $('#newStu').onclick=()=>{closeModal();newStudent()};const em=$('#editMe');if(em)em.onclick=()=>openStudent()}
+  $('#newStu').onclick=()=>{closeModal();newStudent()};const em=$('#editMe');if(em)em.onclick=()=>openStudent();const om=$('#outMe');if(om)om.onclick=()=>confirmLogout()}
 function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0),0);const secs=T.filter(t=>state.done[t.id]===true).reduce((s,t)=>s+((state.att[t.id]||{}).spent||0),0);
   return {rid:state.student.rid||'',av:avatarOf(),bd:Object.keys(state.badges||{}).length,team:state.student.team||'',partner:(state.pair&&state.pair.name)||'',path:state.support?'sup':advUnlocked()?'adv':'',tps:Object.fromEntries(Object.entries(state.tps||{}).filter(([k,v])=>v.s2).map(([k,v])=>[k,(v.a2||'').slice(0,400)])),sl:state.self||{},kw:state.kwl||{},en:Object.fromEntries(Object.entries(state.entry||{}).map(([k,v])=>[k,v.s])),xe:state.expert||null,ad:T.filter(t=>t.adv&&state.done[t.id]===true).length,name:state.student.name,cls:state.student.cls,school:state.student.school||SCHOOL,points:earnedOf(),max:curMax(),grade20:grade20(),
   tasksDone:CORE.filter(t=>state.done[t.id]===true).length,helped:T.filter(t=>state.done[t.id]==='help').length,tasks:curTasks(),bonus:bonusOf(),
@@ -1586,7 +1591,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'5167b8a10269',hash:'8c1c18a4688dfbf625960ce221238ac28ce84a19bd945961bccf2746bee8f452'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'864fd866621c',hash:'10f0cc272a28efea7b180b2e3145e21fc9393315758e6cd4ca760c7866838cff'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2116,6 +2121,20 @@ $('#wSplit').onclick=()=>setVMax(true,!document.body.classList.contains('vsplit'
 $('.titlebar').addEventListener('dblclick',e=>{if(e.target.closest('button'))return;$('#wMax').click()});
 {let v='0';try{v=sessionStorage.getItem('mlab-vmax')||'0'}catch(e){}if(v!=='0')setVMax(true,v==='2')}
 
+
+
+/* ---------- the student's own name on her page + sign out ---------- */
+function helloCard(){const st=state.student;if(!st.name)return '';const first=String(st.name).trim().split(/\s+/)[0];const h=new Date().getHours();const g=h<12?'صباح الخير':'مساء الخير';
+  return `<div class="hello"><span class="hav">${st.av||'🌸'}</span><div class="htxt"><small>${g}</small><b>${esc(first)}</b><span>${esc(st.name)} · ${esc(String(st.cls||'').replace('الصف ',''))}</span></div><button class="btn hout" type="button" id="logoutBtn" title="تسجيل الخروج وحفظ عملكِ">↩ خروج</button></div>`}
+function confirmLogout(){if(!state.student.name){openChooser();return}
+  modal(`<h2>تسجيل الخروج</h2><p style="margin:0">هل تريدين الخروج يا <b>${esc(state.student.name.split(' ')[0])}</b>؟ سيُحفظ عملكِ على هذا الجهاز وتُرسل نتيجتكِ للمعلمة، وتكملين من حيث توقفتِ عندما تختارين اسمكِ في المرة القادمة.</p>
+  <div class="actions" style="margin-top:16px"><button class="btn primary" type="button" id="doLogout">نعم، خروج</button><button class="btn" type="button" data-close-modal>إلغاء</button></div><div id="loMsg"></div>`);
+  $('#doLogout').onclick=async ev=>{const b=ev.currentTarget;b.disabled=true;b.textContent='جارٍ الحفظ…';const name=state.student.name.split(' ')[0];
+    flush();try{await Promise.race([pushResult(),new Promise(r=>setTimeout(r,5000))])}catch(e){}
+    try{if(typeof extWin!=='undefined'&&extWin&&!extWin.closed)extWin.close()}catch(e){}
+    state=freshState();try{localStorage.removeItem(KEY+':draft')}catch(e){}resetRuntime();applyToday();renderAll();renderBrowser();closeModal();
+    toast('👋 إلى اللقاء يا '+esc(name)+'! حُفظ عملكِ.',3500);setTimeout(()=>openChooser(),400)}}
+document.addEventListener('click',e=>{if(e.target.closest('#logoutBtn')){e.preventDefault();confirmLogout()}});
 
 /* ---------- layout: task + VS Code side by side, preview in its own window ---------- */
 const twoPane=()=>document.body.classList.contains('twopane')&&innerWidth>880;
@@ -2651,7 +2670,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='4958cf7941';
+const BUILD_ID='43cfb32d55';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
