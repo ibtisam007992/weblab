@@ -536,6 +536,7 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
 .tdhint{flex:none;font-size:12.5px;font-weight:700;color:var(--teal);white-space:nowrap}
 .tdrop[open]>summary{border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}
 .tdrop .tlist{max-height:46vh;overflow:auto}
+.asbtn{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0 6px}.asbtn:hover{background:rgba(255,255,255,.12)}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1319,7 +1320,7 @@ function newUntitled(){const name='Untitled-'+state.untitledN++;state.untitled[n
 
 /* ================= menus ================= */
 const MENUS={
- file:[['New File','Ctrl+N','newfile'],['Open File...','Ctrl+O','openfile'],['Open Folder...','Ctrl+K Ctrl+O','openfolder'],'-',['Save','Ctrl+S','save'],['Save All','','saveall'],'-',['Close Editor','Ctrl+F4','closeeditor'],['Close Folder','','closefolder']],
+ file:[['New File','Ctrl+N','newfile'],['Open File...','Ctrl+O','openfile'],['Open Folder...','Ctrl+K Ctrl+O','openfolder'],'-',['Save','Ctrl+S','save'],['Save All','','saveall'],['Auto Save','','autosave'],'-',['Close Editor','Ctrl+F4','closeeditor'],['Close Folder','','closefolder']],
  edit:[['Undo','Ctrl+Z','undo'],['Redo','Ctrl+Y','redo'],'-',['Find','Ctrl+F','find']],
  sel:[['Select All','Ctrl+A','selectall']],
  view:[['Explorer','Ctrl+Shift+E','v-explorer'],['Search','Ctrl+Shift+F','v-search'],['Run','Ctrl+Shift+D','v-run'],['Extensions','Ctrl+Shift+X','v-ext']],
@@ -1329,12 +1330,12 @@ const MENUS={
  help:[['Welcome','','welcome'],['Show All Commands','Ctrl+Shift+P','none'],['About','','about']]};
 const dd=$('#dropdown');
 $('#menus').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b||partsGuard(e))return;const open=b.classList.contains('open');closeMenu();if(open)return;b.classList.add('open');
-  dd.innerHTML=MENUS[b.dataset.m].map(m=>m==='-'?'<hr>':`<button type="button" data-c="${m[2]}"><span>${m[0]}</span><span class="k">${m[1]}</span></button>`).join('');dd.style.left=(b.offsetLeft+34)+'px';dd.hidden=false});
+  dd.innerHTML=MENUS[b.dataset.m].map(m=>m==='-'?'<hr>':`<button type="button" data-c="${m[2]}"><span>${m[2]==='autosave'?(autoSaveOn()?'✓ ':'<span style="display:inline-block;width:1em"></span>'):''}${m[0]}</span><span class="k">${m[1]}</span></button>`).join('');dd.style.left=(b.offsetLeft+34)+'px';dd.hidden=false});
 function closeMenu(){dd.hidden=true;document.querySelectorAll('#menus .open').forEach(x=>x.classList.remove('open'))}
 document.addEventListener('mousedown',e=>{if(!dd.hidden&&!dd.contains(e.target)&&!e.target.closest('#menus'))closeMenu()});
 dd.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;closeMenu();cmd(b.dataset.c)});
 function cmd(c){const ta=$('#ta');
-  switch(c){case'newfile':newUntitled();break;case'openfile':openFilePick();break;case'openfolder':openFolderPick();break;case'save':saveActive();break;
+  switch(c){case'newfile':newUntitled();break;case'openfile':openFilePick();break;case'openfolder':openFolderPick();break;case'save':saveActive();break;case'autosave':toggleAutoSave();break;
    case'saveall':Object.values(state.ws).forEach(w=>Object.values(w.files).forEach(f=>f.saved=f.content));afterSave();break;
    case'closeeditor':closeTab(state.active);break;case'closefolder':state.folder=null;persist();renderVS();break;
    case'undo':ta.focus();document.execCommand('undo');break;case'redo':ta.focus();document.execCommand('redo');break;
@@ -1396,7 +1397,7 @@ ta.addEventListener('scroll',()=>{syncScroll();hideSuggest()});
 /* ---------- editing ---------- */
 let suppress=false;
 function insertText(s){suppress=true;let ok=false;try{ok=document.execCommand('insertText',false,s)}catch(e){}if(!ok){const a=ta.selectionStart,b=ta.selectionEnd;ta.setRangeText(s,a,b,'end');onEdit()}suppress=false}
-function onEdit(){const a=activeFile();if(!a)return;const wasDirty=a.f.content!==a.f.saved;a.f.content=ta.value;const dirty=a.f.content!==a.f.saved;if(dirty!==wasDirty)renderTabs();refreshEditor();lastCode={key:tabKey(a.t),pos:ta.selectionStart};persist()}
+function onEdit(){const a=activeFile();if(!a)return;const wasDirty=a.f.content!==a.f.saved;a.f.content=ta.value;const dirty=a.f.content!==a.f.saved;if(dirty!==wasDirty)renderTabs();refreshEditor();lastCode={key:tabKey(a.t),pos:ta.selectionStart};persist();if(dirty&&a.t.ws!=='untitled')queueAutoSave()}
 const VOID=['br','hr','img','meta','link','source','input','area','base','col','embed','wbr'];
 ta.addEventListener('input',e=>{onEdit();if(suppress)return;
   const pos=ta.selectionStart,v=ta.value;
@@ -1463,7 +1464,7 @@ function afterFilesChanged(){ta.dataset.key='';persist();renderVS();reloadBrowse
 function renderStatus(){const a=activeFile();const sb=$('#statusbar');sb.classList.toggle('nofolder',!state.folder);
   let pos='';let lang='';if(a){const v=ta.value.slice(0,ta.selectionStart);const ln=v.split('\n').length,col=v.length-v.lastIndexOf('\n');pos=`<span>Ln ${ln}, Col ${col}</span><span>Spaces: 2</span><span>UTF-8</span>`;lang=`<span>${{html:'HTML',css:'CSS',plaintext:'Plain Text'}[langOf(a.t)]||langOf(a.t)}</span>`}
   const live=state.liveServer?`<button type="button" class="golive" id="goLive" title="Click to run live server">${liveOn?'⊘ Port : 5500':'((·)) Go Live'}</button>`:'';
-  const pe=a?probs.filter(x=>x.sev==='error').length:0,pw=a?probs.length-pe:0;sb.innerHTML=`<button type="button" id="probsBtn" title="المشكلات">⊗ ${pe?'<b>'+pe+'</b>':0} ⚠ ${pw?'<b>'+pw+'</b>':0}</button><div class="right">${pos}${lang}${live}<span>🔔</span></div>`}
+  const pe=a?probs.filter(x=>x.sev==='error').length:0,pw=a?probs.length-pe:0;sb.innerHTML=`<button type="button" id="probsBtn" title="المشكلات">⊗ ${pe?'<b>'+pe+'</b>':0} ⚠ ${pw?'<b>'+pw+'</b>':0}</button><div class="right">${pos}${lang}<button type="button" id="asBtn" class="asbtn" title="الحفظ التلقائي: يُحفظ الملف بعد ثانية من توقفكِ عن الكتابة">${autoSaveOn()?'💾 Auto Save: On':'Auto Save: Off'}</button>${live}<span>🔔</span></div>`}
 let liveOn=false;
 $('#statusbar').addEventListener('click',e=>{if(e.target.closest('#probsBtn')&&!partsGuard(e)){probsOpen=!probsOpen;renderProblems();return}if(e.target.closest('#goLive')&&!partsGuard(e)){goLive()}});
 function renderVS(){renderTabs();renderSide();renderEditorArea();renderStatus()}
@@ -1614,7 +1615,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'b14e79f9b80a',hash:'19355cc7368584733da2ac0f31f1646c8dc2b24ce4499e70c5ebb0e04576019d'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'0f32dcffab6b',hash:'f59e0a4f8f75360d4a99210c77547bf273e26df9cc230fdee66049c6602c32d4'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1878,8 +1879,8 @@ function renderProblems(){const el=$('#probs');if(!el)return;const a=activeFile(
   el.innerHTML=`<div class="ph"><span>PROBLEMS ${e+w?`<b>${e+w}</b>`:''}</span><button type="button" class="iconbtn" id="probsClose" title="Close">×</button></div>`+(probs.length?probs.map(p=>`<button type="button" data-pl="${p.line}"><span class="${p.sev==='error'?'sev-e':'sev-w'}">${p.sev==='error'?'⊗':'⚠'}</span><span class="pm">${esc(p.msg)}</span><span class="ln">[Ln ${p.line}]</span></button>`).join(''):'<div class="pm" style="padding:6px 12px;color:#999">لا توجد مشكلات في هذا الملف 👍</div>')}
 $('#editorArea')&&0;
 document.addEventListener('click',e=>{const pl=e.target.closest('#probs [data-pl]');if(pl){const a=activeFile();if(a)openFile(a.t.ws,a.t.path,+pl.dataset.pl-1);return}if(e.target.closest('#probsClose')){probsOpen=false;renderProblems()}});
-function lintOnSave(){const a=activeFile();if(!a||a.t.ws==='untitled')return;const P=lintSource(langOf(a.t),a.f.saved,a.t.ws);const errs=P.filter(p=>p.sev==='error');
-  const codes=new Set();P.forEach(p=>{if(!codes.has(p.code)){codes.add(p.code);recordMist(p.code,p.msg)}});
+function lintOnSave(quiet){const a=activeFile();if(!a||a.t.ws==='untitled')return;const P=lintSource(langOf(a.t),a.f.saved,a.t.ws);const errs=P.filter(p=>p.sev==='error');
+  if(quiet){renderProblems&&renderProblems();return}const codes=new Set();P.forEach(p=>{if(!codes.has(p.code)){codes.add(p.code);recordMist(p.code,p.msg)}});
   if(!errs.length&&['html','css'].includes(langOf(a.t))){state.cleanSaves=(state.cleanSaves||0)+1;checkBadges()}if(errs.length){probsOpen=true;renderProblems();toast('⊗ في الملف '+ar(errs.length)+' '+(errs.length>1?'أخطاء':'خطأ')+' كتابة — اقرئي الشرح في لوحة المشكلات أسفل المحرر.',4200)}}
 
 /* ---------- mistakes log ---------- */
@@ -2158,6 +2159,16 @@ function confirmLogout(){if(!state.student.name){openChooser();return}
     state=freshState();try{localStorage.removeItem(KEY+':draft')}catch(e){}resetRuntime();applyToday();renderAll();renderBrowser();closeModal();
     toast('👋 إلى اللقاء يا '+esc(name)+'! حُفظ عملكِ.',3500);setTimeout(()=>openChooser(),400)}}
 document.addEventListener('click',e=>{if(e.target.closest('#logoutBtn')){e.preventDefault();confirmLogout()}});
+
+
+/* ---------- File > Auto Save (like VS Code "afterDelay": saves 1 s after typing stops) ---------- */
+const autoSaveOn=()=>state.autoSave!==false;
+let asT=0;
+function queueAutoSave(){if(!autoSaveOn())return;clearTimeout(asT);asT=setTimeout(autoSaveNow,1000)}
+function autoSaveNow(){if(!autoSaveOn())return;let n=0;Object.values(state.ws||{}).forEach(w=>Object.values(w.files||{}).forEach(f=>{if(f.content!==f.saved){f.saved=f.content;n++}}));if(!n)return;
+  persist();renderTabs();renderStatus();lintOnSave(true);reloadBrowserAfterSave();autoCheck();scheduleSync()}
+function toggleAutoSave(){state.autoSave=!autoSaveOn();persist();renderStatus();if(autoSaveOn()){autoSaveNow();toast('💾 الحفظ التلقائي مفعّل: يُحفظ عملكِ بعد ثانية من توقفكِ عن الكتابة.',3500)}else toast('أُوقف الحفظ التلقائي؛ احفظي بـ Ctrl+S.',3000)}
+document.addEventListener('click',e=>{if(e.target.closest('#asBtn')){e.preventDefault();toggleAutoSave()}});
 
 /* ---------- layout: task + VS Code side by side, preview in its own window ---------- */
 const twoPane=()=>document.body.classList.contains('twopane')&&innerWidth>880;
@@ -2693,7 +2704,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='cfaf325c80';
+const BUILD_ID='60136f8a79';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
