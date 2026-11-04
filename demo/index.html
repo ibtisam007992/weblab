@@ -1633,7 +1633,7 @@ function openStudent(after){modal(`<h2>بيانات الطالبة</h2><p style=
   <label class="namefield">اسمكِ<input id="stName" value="${escA(state.student.name)}" placeholder="اكتبي أول حرفين من اسمكِ ثم اختاريه" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="stSug"><div class="sugbox" id="stSug" role="listbox" hidden></div></label>
   <div style="margin-top:10px;font-size:13px">اختاري صورتك الرمزية</div><div class="avs" id="avs">${AVATARS.map(a=>`<button type="button" class="avb ${a===avatarOf()?'on':''}" data-av="${a}" aria-label="صورة رمزية ${a}">${a}</button>`).join('')}</div>
   <label>المدرسة<input id="stSchool" value="${escA(state.student.school||SCHOOL)}"></label>
-  <label>فريقي (فرق الولايات)<select id="stTeam"><option value="">بدون فريق</option>${Object.entries(TEAMS).map(([k,v])=>`<option value="${k}" ${state.student.team===k?'selected':''}>${v} فريق ${k}</option>`).join('')}</select></label>
+  <label>فريقي<select id="stTeam"><option value="">بدون فريق</option>${Object.entries(TEAMS).map(([k,v])=>`<option value="${k}" ${state.student.team===k?'selected':''}>${v} فريق ${k}</option>`).join('')}</select></label>
   <label>اسم زميلتكِ إن كنتما تعملان ثنائياً على الجهاز نفسه (اختياري)<input id="stPair" value="${escA((state.pair&&state.pair.name)||'')}" placeholder="مثال: نور البوسعيدية"></label>
   <div class="actions" style="margin-top:16px"><button class="btn primary" type="button" id="stSave">حفظ</button><button class="btn" type="button" data-close-modal>إلغاء</button></div>
 `);
@@ -2558,7 +2558,7 @@ function openExpert(){const cur=state.expert||{};const pick=cur.t||null;
   if(pick&&!cur.ok)showQuiz(pick)}
 
 /* ---------- pairs & teams ---------- */
-const TEAMS={'خصب':'🐬','بخا':'🌴','دباء':'⛰️','مدحاء':'🌙'};
+const TEAMS={'لبانة':'🌿','الورد الجبلي':'🌹','مبدعات التقنية':'💻'};
 function pairStrip(){const p=state.pair;if(!p||!p.name)return '';const me=(state.student.name||'').split(' ')[0]||'أنا';const names=[me,p.name.split(' ')[0]];const d=p.d||0;
   return `<div class="pairstrip">👭 <b>عمل ثنائي</b> · ✍️ تكتب الشفرة: <b>${esc(names[d])}</b> · 🧭 توجّه وتراجع: <b>${esc(names[1-d])}</b> <button class="linkbtn" type="button" id="swapBtn">تبديل الدورين</button></div>`}
 function swapPair(auto){if(!state.pair||!state.pair.name)return;state.pair.d=1-(state.pair.d||0);persist();renderMission();if(auto)setTimeout(()=>toast('👭 بدّلا الدورين الآن: '+(state.pair.d?state.pair.name.split(' ')[0]:(state.student.name||'').split(' ')[0])+' تكتب الشفرة.',4000),2200)}
@@ -2584,7 +2584,7 @@ DICT.push([6,'header / main / section / footer','وسوم HTML5 الدلالية
 
 /* ---------- teacher: teams, reflections, grouping, gallery ---------- */
 function teamsHTML(rows){const tm={};rows.forEach(r=>{if(r.team&&TEAMS[r.team]){const x=tm[r.team]||(tm[r.team]={n:0,p:0});x.n++;x.p+=+r.points||0}});const list=Object.entries(tm).map(([k,v])=>({k,n:v.n,avg:v.p/v.n})).sort((a,b)=>b.avg-a.avg);if(!list.length)return '';
-  return `<h3 style="font-size:15px;margin:14px 0 6px">🏝️ ترتيب فرق الولايات <small style="color:var(--muted);font-weight:400">(متوسط نقاط العضوات)</small></h3><div class="teams">${list.map((x,i)=>`<div class="team ${i===0?'lead':''}"><span class="tico">${TEAMS[x.k]}</span><b>فريق ${esc(x.k)}</b><span class="pp">${ar(x.avg.toFixed(1))}</span><small>${ar(x.n)} عضوات${i===0?' · 🏆 في الصدارة':''}</small></div>`).join('')}</div>`}
+  return `<h3 style="font-size:15px;margin:14px 0 6px">🏆 ترتيب الفرق <small style="color:var(--muted);font-weight:400">(متوسط نقاط العضوات)</small></h3><div class="teams">${list.map((x,i)=>`<div class="team ${i===0?'lead':''}"><span class="tico">${TEAMS[x.k]}</span><b>فريق ${esc(x.k)}</b><span class="pp">${ar(x.avg.toFixed(1))}</span><small>${ar(x.n)} عضوات${i===0?' · 🏆 في الصدارة':''}</small></div>`).join('')}</div>`}
 function groupsHTML(rows){const g={adv:[],ok:[],sup:[]};rows.forEach(r=>{const ts=r.tstat||'',hs=r.hstat||'';const done=(ts.match(/[1-9]/g)||[]).length,ft=(ts.match(/1/g)||[]).length,lk=(ts.match(/x/g)||[]).length,hn=hs.split('').reduce((a,c)=>a+(+c||0),0);
   if(lk>=2||hn>=8||(done>=4&&ft/done<0.35))g.sup.push(r);else if(done>=10&&ft/done>=0.7&&hn<=3)g.adv.push(r);else g.ok.push(r)});
   const li=a=>a.map(r=>`<span class="chip">${esc(r.av||'🌸')} ${esc(r.name)}${r.path==='adv'?' 🚀':r.path==='sup'?' 🌱':''}</span>`).join('')||'<span style="color:var(--muted)">—</span>';
@@ -2852,12 +2852,12 @@ const BUILD_ID='bf0bae8296';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= DEMO COPY: fictional classes and results (illustrative only) ================= */
-const DEMO_VER='demo-v1';
+const DEMO_VER='demo-v2';
 function seedDemo(force){try{if(!force&&localStorage.getItem('mlab-demo-seeded')===DEMO_VER)return}catch(e){}
   let sd=20261105;const rnd=()=>{sd=(sd*1103515245+12345)%2147483648;return sd/2147483648};const pick=a=>a[Math.floor(rnd()*a.length)];
   const FIRST=['ميار','جود','ريماس','لين','سدرة','رهف','شهد','ملاك','نوف','غلا','ريم','أريج','دانة','سما','لمى','جنى','تسنيم','رغد','آلاء','بشرى','حلا','روان','وعد','يارا','هيا','مزون','أثير','رزان','سلمى','عهود','ندى','بيان','ريتاج','شذى','مها','ليان','إسراء','ضحى','فجر','نور'];
   const FATHER=['خالد','سعيد','محمد','سالم','علي','أحمد','ناصر','حمد','سيف','راشد','عبدالله','مسلم','بخيت','حمود','يوسف','عامر','سليمان','هلال'];
-  const FAM=['الحبسية','البلوشية','الشحية','الكندية','الحارثية','الهنائية','المعمرية','الريامية','العبرية','الغافرية','السيابية','الرواحية','البادية','الشكيلية','الوهيبية','الجابرية','المقبالية','السعدية','الفارسية','الزدجالية','النعمانية','الخروصية','اليحيائية','الصوافية'];
+  const FAM=['الشنفرية','الرواس','المرهون','المسهلية','باعوين','الكثيرية','العمرية','المعشنية','الشحرية','باعمر','البرعمية','المهرية','الحضرية','قطن','تبوك','بيت سعيد','الغسانية','العوائد','بيت فاضل','اليافعية','الحريزية','بيت جداد','الجابرية','المشيخية'];
   const CL=CLASSES.filter(c=>!/خارج/.test(c));const OPEN=[1,2,3];
   const core=T.filter(t=>OPEN.includes(t.L)&&!t.challenge);const chal=T.filter(t=>OPEN.includes(t.L)&&t.challenge&&!t.adv);const advT=T.filter(t=>t.adv);
   const MAX=OPEN.reduce((s,n)=>s+maxOf(n),0);const mkeys=Object.keys(MIST);const tkeys=Object.keys(TEAMS);
@@ -2865,7 +2865,7 @@ function seedDemo(force){try{if(!force&&localStorage.getItem('mlab-demo-seeded')
   const roster={classes:{},links:{},notes:{}};const docs={};const used=new Set();
   CL.forEach((c,ci)=>{const n=30+Math.floor(rnd()*5);const list=[];docs['results/demo_'+(ci+1)]={};
     const mix=[[0.24,0.42,0.24,0.10],[0.30,0.40,0.20,0.10],[0.18,0.44,0.28,0.10],[0.26,0.38,0.22,0.14],[0.33,0.37,0.20,0.10],[0.20,0.42,0.26,0.12]][ci%6];
-    for(let i=0;i<n;i++){let nm;do{nm=pick(FIRST)+' بنت '+pick(FATHER)+' بن '+pick(FATHER)+' '+pick(FAM)}while(used.has(nm));used.add(nm);
+    for(let i=0;i<n;i++){let nm,fam;do{fam=pick(FAM);nm=pick(FIRST)+' بنت '+pick(FATHER)+' بن '+pick(FATHER)+' '+fam}while(used.has(nm));used.add(nm);
       const id='d'+(ci+1)+'_'+i;list.push({id,n:nm});
       const u=rnd();const lv=u<mix[0]?'hi':u<mix[0]+mix[1]?'mid':u<mix[0]+mix[1]+mix[2]?'low':'none';if(lv==='none')continue;
       const reach=lv==='hi'?1:lv==='mid'?0.75+rnd()*0.2:0.35+rnd()*0.3;const P1=lv==='hi'?0.85:lv==='mid'?0.55:0.3;
@@ -2886,7 +2886,7 @@ function seedDemo(force){try{if(!force&&localStorage.getItem('mlab-demo-seeded')
         sl[L]={r:(OBJ[L]||[0,0,0]).map(()=>{const r=rnd();return lv==='hi'?(r<0.8?'g':'y'):lv==='mid'?(r<0.45?'g':r<0.9?'y':'r'):(r<0.2?'g':r<0.6?'y':'r')}),n:'',day:''}}});
       const day=new Date();day.setDate(day.getDate()-Math.floor(rnd()*5));day.setHours(8+Math.floor(rnd()*5),Math.floor(rnd()*60));
       docs['results/demo_'+(ci+1)]['s_'+id]={rid:id,av:pick(AVATARS),bd:lv==='hi'?4+Math.floor(rnd()*5):lv==='mid'?1+Math.floor(rnd()*3):Math.floor(rnd()*2),team:pick(tkeys),partner:'',
-        path:lv==='hi'&&pctv>=0.9&&ad?'adv':lv==='low'&&rnd()<0.5?'sup':'',tps,sl,kw:{},en:{},xe:null,ad,name:nm.split(' ')[0]+' '+nm.split(' ').pop(),cls:c,school:SCHOOL,
+        path:lv==='hi'&&pctv>=0.9&&ad?'adv':lv==='low'&&rnd()<0.5?'sup':'',tps,sl,kw:{},en:{},xe:null,ad,name:nm.split(' ')[0]+' '+fam,cls:c,school:SCHOOL,
         points:Math.round(pts*2)/2,max:MAX,grade20:grade,tasksDone:doneN,helped:tstat.filter(x=>x==='h').length,tasks:core.length,bonus,attempts:att,timeSec:secs,locked:tstat.filter(x=>x==='x').length,
         lessons:LESSONS.map(l=>lessons[l.n]?{...lessons[l.n],points:Math.round(lessons[l.n].points*2)/2}:{n:l.n,points:0,max:l.n<=5?maxOf(l.n):0,done:0,total:coreOf(l.n).length}),
         tstat:tstat.join(''),hstat:hstat.join(''),mk,ex,pr:[Math.floor(rnd()*3)+(lv==='hi'?2:0),5],sentAt:day.toISOString()}}
