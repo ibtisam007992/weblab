@@ -512,6 +512,17 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
 .sugit{display:block;width:100%;text-align:start;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:8px 10px;border-radius:8px;cursor:pointer}
 .sugit:hover,.sugit.on{background:var(--teal-soft)}.sugit small{color:var(--muted);font-weight:400}
 .sugnone{padding:8px 10px;font-size:12.5px;color:var(--muted)}
+
+.crclose{display:none!important}
+@media (min-width:881px){
+  body.twopane .stage{grid-template-columns:minmax(380px,1fr) minmax(0,1.3fr)!important;grid-template-rows:minmax(0,1fr)!important}
+  body.twopane .mission{grid-row:auto!important;font-size:15px}
+  body.twopane .browser{display:none}
+  body.twopane.brOverlay .browser{display:flex;position:fixed;top:76px;bottom:10px;left:10px;width:min(760px,52vw);z-index:70;height:auto;box-shadow:0 18px 60px rgba(0,0,0,.4);border-radius:12px}
+  body.twopane.brOverlay .crclose{display:inline-flex!important;align-items:center;justify-content:center;color:#c0392b;font-weight:800}
+}
+#brBtn[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal)}
+@media (max-width:880px){#brBtn,#layoutBtn{display:none!important}}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -588,7 +599,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
       <button class="pill" id="soundBtn" type="button" aria-pressed="false">🔇</button>
       <span class="pill" id="timerPill" hidden></span>
       <button class="pill" id="resultBtn" type="button">النتيجة والإرسال</button>
-      <button class="pill" id="teacherBtn" type="button" aria-pressed="false">🔒 واجهة المعلمة</button>
+      <button class="pill" id="brBtn" type="button" title="فتح المتصفح المدمج (للمواقع مثل Freenom وGoogle Drive)">🌐 المتصفح</button><button class="pill" id="layoutBtn" type="button" title="تبديل تخطيط الشاشة"></button><button class="pill" id="teacherBtn" type="button" aria-pressed="false">🔒 واجهة المعلمة</button>
     </div>
   </header>
   <nav class="viewtabs" id="viewtabs">
@@ -671,7 +682,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
         <button type="button" id="crBack" title="رجوع"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
         <button type="button" id="crFwd" title="تقدم"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <button type="button" id="crExt" title="فتح الصفحة في نافذة خارجية" aria-label="فتح الصفحة في نافذة خارجية"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button><button type="button" id="crLink" title="ربط الصفحة بالشفرة" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button>
-        <button type="button" id="crReload" title="إعادة تحميل"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
+        <button type="button" id="crClose" class="crclose" title="إغلاق المتصفح" aria-label="إغلاق المتصفح">✕</button><button type="button" id="crReload" title="إعادة تحميل"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
         <div class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" id="lockIc"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><input id="addr" spellcheck="false" aria-label="شريط العنوان"></div>
       </div>
       <div class="viewport" id="viewport"></div>
@@ -1449,10 +1460,10 @@ function pageTitle(tab){if(tab.kind==='internal')return INTERNAL[tab.page].title
 function navTo(tab,loc,push){if(push!==false){tab.hist=tab.hist.slice(0,tab.hi+1);tab.hist.push(loc);tab.hi=tab.hist.length-1}Object.assign(tab,loc)}
 function newBTab(loc){const t={id:bseq++,hist:[],hi:-1,kind:'blank'};navTo(t,loc);btabs.push(t);bactive=btabs.length-1;return t}
 function openSite(ws,path,scheme,inNew){const loc={kind:'site',ws,path,scheme};const c=cur();if(!inNew&&c&&c.kind==='site'&&c.ws===ws&&c.scheme===scheme)navTo(c,loc);else{const ex=btabs.findIndex(t=>t.kind==='site'&&t.ws===ws&&t.path===path&&t.scheme===scheme);if(ex>=0&&!inNew)bactive=ex;else newBTab(loc)}renderBrowser()}
-function openInternal(page){const ex=btabs.findIndex(t=>t.kind==='internal'&&t.page===page);if(ex>=0)bactive=ex;else newBTab({kind:'internal',page});renderBrowser()}
+function openInternal(page){if(twoPane())showBrOverlay(true);const ex=btabs.findIndex(t=>t.kind==='internal'&&t.page===page);if(ex>=0)bactive=ex;else newBTab({kind:'internal',page});renderBrowser()}
 function htmlTargetForRun(){const a=activeFile();if(a&&a.t.ws!=='untitled'&&/\.html?$/i.test(a.t.path))return {ws:a.t.ws,path:a.t.path};if(a&&a.t.ws==='untitled')return 'untitled';const ws=curWs();if(F(ws,'index.html'))return {ws,path:'index.html'};const k=Object.keys(state.ws[ws].files).find(p=>/\.html?$/i.test(p));return k?{ws,path:k}:null}
-function goLive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها.');return}liveOn=true;renderStatus();openSite(r.ws,r.path,'live');toast('Server is Started at port : 5500');if(innerWidth<=880)setView('browser');autoCheck()}
-function runActive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('افتحي صفحة HTML أولاً.');return}openSite(r.ws,r.path,'file');if(innerWidth<=880)setView('browser')}
+function goLive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('لا توجد صفحة HTML محفوظة لعرضها.');return}liveOn=true;renderStatus();openSite(r.ws,r.path,'live');if(twoPane()){openExternal();if(!extWin||extWin.closed)showBrOverlay(true)}else toast('Server is Started at port : 5500');if(innerWidth<=880)setView('browser');autoCheck()}
+function runActive(){if(document.body.classList.contains('vmax')&&!document.body.classList.contains('vsplit'))setVMax(true,true);const r=htmlTargetForRun();if(r==='untitled'){toast('احفظي الملف أولاً بامتداد .html (Ctrl+S).');return}if(!r){toast('افتحي صفحة HTML أولاً.');return}openSite(r.ws,r.path,'file');if(twoPane()){openExternal();if(!extWin||extWin.closed)showBrOverlay(true)}if(innerWidth<=880)setView('browser')}
 function reloadBrowserAfterSave(){refreshExternal();const c=cur();if(c&&c.kind==='site'){if(c.scheme==='file'){toast('حُفظ الملف. اضغطي زر التحديث ⟳ في المتصفح لرؤية التعديلات، أو استخدمي Go Live.',2600);renderBrowserChrome()}else renderBrowser()}else renderBrowserChrome()}
 
 function buildDoc(tab){const f=F(tab.ws,tab.path);if(!f)return '<p style="font-family:sans-serif;padding:20px">404 — File not found</p>';let h=annotate(f.saved);const tok='t'+tab.id;
@@ -1575,7 +1586,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'0eb94c39fd10',hash:'029649882a61e8252ee72bd1d6a273eb68e3ea33e982b1e608775ce5d53cbd88'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'5167b8a10269',hash:'8c1c18a4688dfbf625960ce221238ac28ce84a19bd945961bccf2746bee8f452'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2105,6 +2116,18 @@ $('#wSplit').onclick=()=>setVMax(true,!document.body.classList.contains('vsplit'
 $('.titlebar').addEventListener('dblclick',e=>{if(e.target.closest('button'))return;$('#wMax').click()});
 {let v='0';try{v=sessionStorage.getItem('mlab-vmax')||'0'}catch(e){}if(v!=='0')setVMax(true,v==='2')}
 
+
+/* ---------- layout: task + VS Code side by side, preview in its own window ---------- */
+const twoPane=()=>document.body.classList.contains('twopane')&&innerWidth>880;
+function showBrOverlay(on){document.body.classList.toggle('brOverlay',!!on);const b=$('#brBtn');if(b)b.setAttribute('aria-pressed',!!on);if(on)renderBrowser()}
+function setLayout(two){document.body.classList.toggle('twopane',two);if(!two)showBrOverlay(false);try{localStorage.setItem('mlab-layout',two?'2':'3')}catch(e){}
+  const b=$('#layoutBtn');b.textContent=two?'▥ قسمان':'▦ ثلاثة أقسام';b.title=two?'التخطيط الحالي: المهمة وVS Code، والمعاينة في نافذة خارجية. اضغطي لعرض المتصفح داخل الصفحة.':'التخطيط الحالي: المهمة وVS Code والمتصفح. اضغطي لجعل المعاينة في نافذة خارجية.';
+  $('#brBtn').hidden=!two;setTimeout(()=>window.dispatchEvent(new Event('resize')),30)}
+$('#layoutBtn').onclick=()=>{const two=!document.body.classList.contains('twopane');setLayout(two);toast(two?'▥ المهمة وVS Code جنباً إلى جنب؛ تُفتح صفحتك في نافذة خارجية عند Go Live.':'▦ عاد المتصفح داخل الصفحة.',4000)};
+$('#brBtn').onclick=()=>showBrOverlay(!document.body.classList.contains('brOverlay'));
+$('#crClose').onclick=()=>showBrOverlay(false);
+{let v='2';try{v=localStorage.getItem('mlab-layout')||'2'}catch(e){}setLayout(v!=='3')}
+
 /* ---------- external window (real browser tab) ---------- */
 let extWin=null,extTab=null;
 function extHTML(){const f=F(extTab.ws,extTab.path);if(!f)return '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>404</title></head><body style="font-family:Tahoma,sans-serif;padding:30px"><h1>404</h1><p>لم يُعثر على الصفحة <code>'+esc(extTab.path)+'</code>. تأكدي من اسم الملف في سمة href ومن حفظه.</p></body></html>';
@@ -2628,7 +2651,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='1eb6406039';
+const BUILD_ID='4958cf7941';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
