@@ -504,6 +504,9 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
   body.printrep .rep:last-child{page-break-after:auto;break-after:auto}
   body.printrep .reptiles div,body.printrep .bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.racts{display:flex;gap:6px;align-items:center;justify-content:flex-end}.btn.icon{padding:4px 8px;min-width:0}
+.btn.danger{background:#c0392b!important;border-color:#c0392b!important;color:#fff!important}
+.radd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.radd input{flex:1;min-width:200px;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1567,7 +1570,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'bab13d95fa82',hash:'6bc224aaa38faf12fc76a105451188c36eb71184b4a5dee536edec58013d6271'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'644e5ba7f577',hash:'7698dab153e0c2110303f2f2d0a569bf60cda24e9879a1beecc3c85d1ce08f30'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2472,7 +2475,7 @@ async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل ا�
 
 /* ---------- parsing pasted text / CSV / Excel ---------- */
 function parseRosterRows(rows,fallbackCls){rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(Boolean));if(!rows.length)return [];
-  const W=Math.max(...rows.map(r=>r.length));const isName=v=>/[؀-ۿ]/.test(v)&&normName(v).split(' ').length>=2&&!/(الصف|عاشر|الاسم|اسم الطالب)/.test(v);
+  const W=Math.max(...rows.map(r=>r.length));const isName=v=>{if(!/[\u0600-\u06FF]/.test(v)||/[0-9٠-٩:()\/]/.test(v))return false;const w=normName(v).split(' ').filter(Boolean);const STOP=['الصف','عاشر','العاشر','الاسم','اسم','الطالب','الطالبه','المجموع','المستوي','استماره','الشعبه','تقييم','درجه','الفصل','المشروع','معلمه','معلم','الماده','مديره','المديره','توقيع','مشرفه'];return w.length>=2&&w.length<=9&&!w.some(x=>STOP.includes(x))};
   const isCls=v=>/(عاشر|الصف)/.test(v)||/^\s*[0-9٠-٩]{1,2}\s*[\/\-]\s*[0-9٠-٩]{1,2}\s*$/.test(v);
   let nc=-1,nb=0,cc=-1,cb=0;for(let i=0;i<W;i++){const n=rows.filter(r=>isName(r[i]||'')).length,c=rows.filter(r=>isCls(r[i]||'')).length;if(n>nb){nb=n;nc=i}if(c>cb){cb=c;cc=i}}
   if(nc<0)return [];if(cc===nc||cb<rows.length*0.3)cc=-1;const out=[];
@@ -2483,9 +2486,15 @@ let xlsxP=null;
 function loadXLSX(){if(window.XLSX)return Promise.resolve(window.XLSX);if(!xlsxP)xlsxP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>{xlsxP=null;rej(new Error('xlsx'))};document.head.appendChild(s)});return xlsxP}
 async function parseRosterFile(file,fallbackCls){const name=(file.name||'').toLowerCase();
   if(/\.(csv|txt)$/.test(name)){return parseRosterText(await file.text(),fallbackCls)}
-  const X=await loadXLSX();const wb=X.read(await file.arrayBuffer(),{type:'array'});let out=[];
-  wb.SheetNames.forEach(sn=>{const rows=X.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:''});const sheetCls=(()=>{const s=secOf(sn);return s&&s!=='out'&&/(عاشر|10|١٠|\/|-)/.test(toLatin(sn))?clsLabel(s):null})();
-    out=out.concat(parseRosterRows(rows,sheetCls||fallbackCls))});return out}
+  const X=await loadXLSX();const wb=X.read(await file.arrayBuffer(),{type:'array'});const fileCls=clsFromText(file.name);let best=[],bestCls=null;
+  wb.SheetNames.forEach(sn=>{const rows=X.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:''});let hc=null;
+    rows.slice(0,12).forEach(r=>r.forEach(c=>{c=String(c||'');if(!hc&&/الشعب/.test(c))hc=clsFromText(c.split(/الشعب[ةه]?/).pop())}));
+    const cls=hc||clsFromText(sn)||fileCls||bestCls||fallbackCls;const got=parseRosterRows(rows,cls);if(hc)bestCls=bestCls||hc;if(got.length>best.length)best=got});
+  const fc=bestCls||fileCls;return fc?best.map(x=>({n:x.n,cls:fc})):best}
+const ORD={'اول':1,'الاول':1,'ثاني':2,'الثاني':2,'ثالث':3,'الثالث':3,'رابع':4,'الرابع':4,'خامس':5,'الخامس':5,'سادس':6,'السادس':6,'سابع':7,'السابع':7,'ثامن':8,'الثامن':8,'تاسع':9,'التاسع':9};
+function clsFromText(t){t=String(t||'');const w=normName(t).split(' ');for(const x of w)if(ORD[x])return clsLabel(ORD[x]);
+  const L=toLatin(t);let m=L.match(/(?:^|\D)10\s*[\/_\-.\s]\s*(\d)(?!\d)/)||L.match(/(?:^|\D)(\d)\s*[\/_\-.]\s*10(?!\d)/);if(m)return clsLabel(+m[1]);
+  m=L.replace(/[^\d]+/g,' ').trim().match(/^(\d)$/);return m&&/(شعب|صف|class)/i.test(t)?clsLabel(+m[1]):null}
 
 /* ---------- the roster tab ---------- */
 function statusOf(r){if(!r)return ['لم تبدأ','st-no'];const done=(r.lessons||[]).filter(l=>l.total&&l.done===l.total).map(l=>l.n);if(done.length)return ['أكملت الدرس '+done.map(ar).join('، '),'st-ok'];return ['تعمل الآن','st-run']}
@@ -2498,20 +2507,28 @@ function drawRoster(b){if(rosterMode==='import'){drawRosterImport(b);return}
   const sum=cls.map(c=>{const l=rosterData.classes[c];const st=l.filter(x=>res[x.id]).length;return {c,n:l.length,st}});
   const list=(rosterData.classes[rosterCls]||[]).slice();const um=unmatched.filter(u=>secOf(u.r.cls)===secOf(rosterCls));
   b.innerHTML=`<div class="rsum">${sum.map(s=>`<button type="button" class="rcls ${s.c===rosterCls?'on':''}" data-rc="${escA(s.c)}"><b>${esc(s.c.replace('الصف ',''))}</b><small>${ar(s.st)} من ${ar(s.n)} بدأن</small><span class="rbar"><i style="width:${s.n?Math.round(s.st/s.n*100):0}%"></i></span></button>`).join('')}</div>
-  <div class="actions"><button class="btn" type="button" id="rImp">📥 استيراد / تحديث الكشوف</button><button class="btn" type="button" id="rCsv">⬇️ تنزيل نتائج الصف (Excel)</button><button class="btn primary" type="button" id="rPrintAll">🖨️ تقارير الصف كاملة</button></div>
+  <div class="actions"><button class="btn" type="button" id="rImp">📥 استيراد / تحديث الكشوف</button><button class="btn warn" type="button" id="rDelCls">🗑️ حذف كشف ${esc(rosterCls.replace('الصف ',''))}</button><button class="btn" type="button" id="rCsv">⬇️ تنزيل نتائج الصف (Excel)</button><button class="btn primary" type="button" id="rPrintAll">🖨️ تقارير الصف كاملة</button></div>
   ${um.length?`<div class="rwarn"><b>⚠️ ${ar(um.length)} نتيجة لم تُطابق اسماً في كشف ${esc(rosterCls)}</b><small>كتبت الطالبة اسمها بطريقة مختلفة. اختاري اسمها من الكشف ليُحفظ الربط.</small>${um.map(u=>`<div class="rlink"><span>${esc(u.r.name)} <small>(${ar(u.r.points)} نقطة)</small></span><select data-lk="${escA(rkey(u.r))}"><option value="">— اختاري اسمها —</option>${(u.cands.length?u.cands:list).map(x=>`<option value="${escA(x.id)}">${esc(x.n)}</option>`).join('')}</select></div>`).join('')}</div>`:''}
   <div class="dashwrap"><table class="dash rtab"><thead><tr><th class="n">#</th><th>الطالبة</th><th>الحالة</th><th class="n">النقاط</th><th class="n">الدرجة /٢٠</th><th class="n">المهام</th><th>آخر نشاط</th><th></th></tr></thead><tbody>
-  ${list.map((x,i)=>{const r=res[x.id];const [st,sc]=statusOf(r);return `<tr><td class="n">${ar(i+1)}</td><td><b>${esc(x.n)}</b>${r&&normName(r.name)!==normName(x.n)?`<br><small style="color:var(--muted)">كتبت: ${esc(r.name)}</small>`:''}</td><td><span class="stchip ${sc}">${st}</span></td><td class="n">${r?ar(r.points)+' / '+ar(r.max):'—'}</td><td class="n">${r?ar(r.grade20):'—'}</td><td class="n">${r?ar(r.tasksDone)+' / '+ar(r.tasks):'—'}</td><td>${r?agoTxt(r.sentAt):'—'}</td><td><button class="btn" type="button" data-rep="${escA(x.id)}">📄 التقرير</button></td></tr>`}).join('')}</tbody></table></div>`;
+  ${list.map((x,i)=>{const r=res[x.id];const [st,sc]=statusOf(r);return `<tr><td class="n">${ar(i+1)}</td><td><b>${esc(x.n)}</b>${r&&normName(r.name)!==normName(x.n)?`<br><small style="color:var(--muted)">كتبت: ${esc(r.name)}</small>`:''}</td><td><span class="stchip ${sc}">${st}</span></td><td class="n">${r?ar(r.points)+' / '+ar(r.max):'—'}</td><td class="n">${r?ar(r.grade20):'—'}</td><td class="n">${r?ar(r.tasksDone)+' / '+ar(r.tasks):'—'}</td><td>${r?agoTxt(r.sentAt):'—'}</td><td class="racts"><button class="btn" type="button" data-rep="${escA(x.id)}">📄 التقرير</button><button class="btn icon" type="button" data-rdel="${escA(x.id)}" title="حذف ${escA(x.n)} من الكشف" aria-label="حذف ${escA(x.n)} من الكشف">🗑️</button></td></tr>`}).join('')}</tbody></table></div>
+  <form class="radd" id="rAdd"><input id="rAddN" placeholder="إضافة طالبة إلى ${escA(rosterCls)}: اكتبي اسمها الكامل" aria-label="اسم الطالبة الجديدة"><button class="btn" type="submit">➕ إضافة</button></form>
+  <small style="color:var(--muted)">الحذف من الكشف لا يحذف عمل الطالبة ولا نتيجتها؛ تبقى نتيجتها في «جدول النتائج».</small>`;
   b.querySelectorAll('[data-rc]').forEach(x=>x.onclick=()=>{rosterCls=x.dataset.rc;drawTeacher()});
   $('#rImp').onclick=()=>{rosterMode='import';drawTeacher()};
   b.querySelectorAll('[data-rep]').forEach(x=>x.onclick=()=>openReport([x.dataset.rep]));
+  const forget=ids=>{const L=rosterData.links||{};Object.keys(L).forEach(k=>{if(ids.includes(L[k]))delete L[k]});ids.forEach(i=>{if(rosterData.notes)delete rosterData.notes[i]})};
+  const twoStep=(btn,label,act)=>{if(btn.dataset.armed){act();return}btn.dataset.armed='1';const old=btn.innerHTML;btn.innerHTML=label;btn.classList.add('danger');setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.innerHTML=old;btn.classList.remove('danger')}},4000)};
+  $('#rDelCls').onclick=ev=>twoStep(ev.currentTarget,'⚠️ اضغطي مرة أخرى لحذف كشف '+esc(rosterCls.replace('الصف ',''))+' كاملاً',async()=>{const ids=(rosterData.classes[rosterCls]||[]).map(x=>x.id);forget(ids);delete rosterData.classes[rosterCls];if(await saveRoster('حُذف كشف '+rosterCls+'.')){rosterCls='';drawTeacher()}});
+  b.querySelectorAll('[data-rdel]').forEach(x=>x.onclick=()=>twoStep(x,'تأكيد الحذف',async()=>{const id=x.dataset.rdel;const l=rosterData.classes[rosterCls]||[];const st=l.find(y=>y.id===id);rosterData.classes[rosterCls]=l.filter(y=>y.id!==id);forget([id]);if(await saveRoster('حُذفت '+(st?st.n:'الطالبة')+' من الكشف.'))drawTeacher()}));
+  $('#rAdd').onsubmit=async ev=>{ev.preventDefault();const n=$('#rAddN').value.replace(/\s+/g,' ').trim();if(normName(n).split(' ').length<2){toast('اكتبي اسم الطالبة كاملاً (كلمتان على الأقل).');return}const l=rosterData.classes[rosterCls]=rosterData.classes[rosterCls]||[];if(l.some(y=>normName(y.n)===normName(n))){toast('هذه الطالبة موجودة في الكشف.');return}
+    l.push({id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),n});if(await saveRoster('أُضيفت '+n+'.'))drawTeacher()};
   $('#rPrintAll').onclick=()=>openReport(list.map(x=>x.id));
   $('#rCsv').onclick=()=>rosterCSV(rosterCls,list,res);
   b.querySelectorAll('[data-lk]').forEach(s=>s.onchange=async()=>{if(!s.value)return;rosterData.links=rosterData.links||{};rosterData.links[s.dataset.lk]=s.value;if(await saveRoster('رُبطت النتيجة بالطالبة.'))drawTeacher()})}
 function drawRosterImport(b){const d=rosterDraft;
   b.innerHTML=`<div class="rimp"><h3 style="margin:12px 0 4px;font-size:16px">استيراد كشوف الصف العاشر</h3>
-  <p style="margin:0;color:var(--muted);font-size:12.5px">ارفعي ملف Excel أو CSV فيه أسماء الطالبات (يمكن أن يكون كل صف في ورقة مستقلة، أو عمود للاسم وعمود للصف مثل «10/2»)، أو انسخي الأسماء من Excel والصقيها هنا. الملف لا يُرفع إلى أي مكان؛ تُحفظ الأسماء والصفوف فقط في سجل المنصة الخاص بكِ.</p>
-  <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف الافتراضي <select id="riCls">${CLASSES.filter(c=>!/خارج/.test(c)).map(c=>`<option ${c===rosterCls?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="btn" style="cursor:pointer">📂 اختيار ملف Excel / CSV<input type="file" id="riFile" accept=".xlsx,.xls,.csv,.txt" hidden></label></div>
+  <p style="margin:0;color:var(--muted);font-size:12.5px">ارفعي ملف Excel أو CSV فيه أسماء الطالبات (يمكن أن يكون كل صف في ورقة مستقلة، أو عمود للاسم وعمود للصف مثل «10/2»)، أو انسخي الأسماء من Excel والصقيها هنا. تُقرأ من الملفات <b>أسماء الطالبات والصف فقط</b>، وتُتجاهل الدرجات وأي بيانات أخرى فيها؛ والملف نفسه لا يُرفع إلى أي مكان.</p>
+  <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف الافتراضي <select id="riCls">${CLASSES.filter(c=>!/خارج/.test(c)).map(c=>`<option ${c===rosterCls?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="btn" style="cursor:pointer">📂 اختيار ملفات Excel (يمكن اختيار كل الصفوف معاً)<input type="file" id="riFile" accept=".xlsx,.xls,.csv,.txt" multiple hidden></label></div>
   <small style="color:var(--muted)">«الصف الافتراضي» يُستخدم للأسماء التي لا يُذكر صفها في الملف أو اللصق.</small>
   <textarea id="riTxt" class="copybox" style="min-height:140px;margin-top:8px" placeholder="مثال:&#10;ريم سالم محمد الحارثية&#9;10/1&#10;شهد خالد علي البلوشية&#9;10/1&#10;أو اسم في كل سطر للصف الافتراضي"></textarea>
   <div class="actions"><button class="btn" type="button" id="riPrev">معاينة</button><button class="btn" type="button" id="riBack">رجوع</button></div>
@@ -2519,7 +2536,10 @@ function drawRosterImport(b){const d=rosterDraft;
   const fb=()=>$('#riCls').value;
   $('#riBack').onclick=()=>{rosterMode='view';rosterDraft=null;drawTeacher()};
   $('#riPrev').onclick=()=>{rosterDraft=parseRosterText($('#riTxt').value,fb());$('#riOut').innerHTML=rosterPreview(rosterDraft);bindPrev()};
-  $('#riFile').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;$('#riOut').innerHTML='<p>جارٍ قراءة الملف…</p>';try{rosterDraft=await parseRosterFile(f,fb());$('#riOut').innerHTML=rosterPreview(rosterDraft);bindPrev()}catch(e){$('#riOut').innerHTML='<div class="feedback bad">تعذّرت قراءة الملف. احفظيه بصيغة CSV أو انسخي الأسماء والصقيها.</div>'}};
+  $('#riFile').onchange=async ev=>{const fs=[...ev.target.files];if(!fs.length)return;$('#riOut').innerHTML='<p>جارٍ قراءة '+ar(fs.length)+' ملف…</p>';let all=[],bad=[];
+    for(const f of fs){try{all=all.concat(await parseRosterFile(f,fb()))}catch(e){bad.push(f.name)}}
+    const seen=new Set();rosterDraft=all.filter(x=>{const k=x.cls+'|'+normName(x.n);if(seen.has(k))return false;seen.add(k);return true});
+    $('#riOut').innerHTML=(bad.length?'<div class="feedback bad">تعذّرت قراءة: '+bad.map(esc).join('، ')+'</div>':'')+rosterPreview(rosterDraft);bindPrev()};
   const bindPrev=()=>{const s=$('#riSave');if(!s)return;s.onclick=async()=>{const mode=($('input[name=riMode]:checked')||{}).value||'replace';const g={};rosterDraft.forEach(x=>(g[x.cls]=g[x.cls]||[]).push(x.n));
     rosterData.classes=rosterData.classes||{};Object.entries(g).forEach(([c,names])=>{const old=rosterData.classes[c]||[];const keep=mode==='add'?old.slice():[];const byN={};old.forEach(o=>byN[normName(o.n)]=o);
       names.forEach(n=>{const k=normName(n);if(keep.some(o=>normName(o.n)===k))return;keep.push(byN[k]||{id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),n})});rosterData.classes[c]=keep});
