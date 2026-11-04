@@ -507,6 +507,11 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
 .racts{display:flex;gap:6px;align-items:center;justify-content:flex-end}.btn.icon{padding:4px 8px;min-width:0}
 .btn.danger{background:#c0392b!important;border-color:#c0392b!important;color:#fff!important}
 .radd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.radd input{flex:1;min-width:200px;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.namefield{position:relative}
+.sugbox{position:absolute;inset-inline:0;top:100%;z-index:5;background:var(--surface);border:1px solid var(--teal);border-radius:10px;box-shadow:0 10px 24px #0003;max-height:260px;overflow:auto;margin-top:4px;padding:4px}
+.sugit{display:block;width:100%;text-align:start;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:8px 10px;border-radius:8px;cursor:pointer}
+.sugit:hover,.sugit.on{background:var(--teal-soft)}.sugit small{color:var(--muted);font-weight:400}
+.sugnone{padding:8px 10px;font-size:12.5px;color:var(--muted)}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1531,19 +1536,19 @@ $('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.clos
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal()});
 const CLASSES=['الصف العاشر / ١','الصف العاشر / ٢','الصف العاشر / ٣','الصف العاشر / ٤','الصف العاشر / ٥','الصف العاشر / ٦','طالبة من خارج المدرسة'];
 function openStudent(after){modal(`<h2>بيانات الطالبة</h2><p style="color:var(--muted);margin:0">يظهر الاسم في بطاقة النتيجة. يُحفظ عملك على هذا الجهاز باسمك، وتختارينه في الحصة القادمة لتكملي من حيث توقفتِ.</p>
-  <label>الاسم الثلاثي<input id="stName" value="${escA(state.student.name)}" placeholder="مثال: مريم بنت سعيد البلوشية"></label>
-  <div style="margin-top:10px;font-size:13px">اختاري صورتك الرمزية</div><div class="avs" id="avs">${AVATARS.map(a=>`<button type="button" class="avb ${a===avatarOf()?'on':''}" data-av="${a}" aria-label="صورة رمزية ${a}">${a}</button>`).join('')}</div>
   <label>الصف والشعبة<select id="stCls">${CLASSES.map(c=>`<option ${c===state.student.cls?'selected':''}>${c}</option>`).join('')}</select></label>
+  <label class="namefield">اسمكِ<input id="stName" value="${escA(state.student.name)}" placeholder="اكتبي أول حرفين من اسمكِ ثم اختاريه" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="stSug"><div class="sugbox" id="stSug" role="listbox" hidden></div></label>
+  <div style="margin-top:10px;font-size:13px">اختاري صورتك الرمزية</div><div class="avs" id="avs">${AVATARS.map(a=>`<button type="button" class="avb ${a===avatarOf()?'on':''}" data-av="${a}" aria-label="صورة رمزية ${a}">${a}</button>`).join('')}</div>
   <label>المدرسة<input id="stSchool" value="${escA(state.student.school||SCHOOL)}"></label>
   <label>فريقي (فرق الولايات)<select id="stTeam"><option value="">بدون فريق</option>${Object.entries(TEAMS).map(([k,v])=>`<option value="${k}" ${state.student.team===k?'selected':''}>${v} فريق ${k}</option>`).join('')}</select></label>
   <label>اسم زميلتكِ إن كنتما تعملان ثنائياً على الجهاز نفسه (اختياري)<input id="stPair" value="${escA((state.pair&&state.pair.name)||'')}" placeholder="مثال: نور البوسعيدية"></label>
   <div class="actions" style="margin-top:16px"><button class="btn primary" type="button" id="stSave">حفظ</button><button class="btn" type="button" data-close-modal>إلغاء</button></div>
 `);
-  $('#stName').focus();$('#avs').onclick=ev=>{const b=ev.target.closest('[data-av]');if(!b)return;$('#avs').querySelectorAll('.avb').forEach(x=>x.classList.toggle('on',x===b))};
+  $('#stName').focus();bindNameSuggest();$('#avs').onclick=ev=>{const b=ev.target.closest('[data-av]');if(!b)return;$('#avs').querySelectorAll('.avb').forEach(x=>x.classList.toggle('on',x===b))};
   $('#stSave').onclick=()=>{const n=$('#stName').value.trim();if(!n){$('#stName').focus();return}
     const ix=loadIdx();const cls=$('#stCls').value;const dup=!state.pid&&ix.list.find(x=>x.name===n&&x.cls===cls);
     if(dup){const ex=$('#stSave');if(!ex.dataset.arm){ex.dataset.arm='1';ex.textContent='يوجد ملف بهذا الاسم — اضغطي مرة أخرى لفتحه';return}closeModal();switchTo(dup.id);after&&after();return}
-    state.student.name=n;state.student.cls=cls;{const ab=$('#avs .avb.on');if(ab)state.student.av=ab.dataset.av}state.student.team=$('#stTeam').value;{const pn=$('#stPair').value.trim();state.pair=pn?{name:pn,d:(state.pair&&state.pair.d)||0}:null}state.student.school=$('#stSchool').value.trim()||SCHOOL;
+    {const inp=$('#stName');const old=state.student.name;state.student.rid=(inp.dataset.rid&&inp.dataset.pick===n)?inp.dataset.rid:(n===old?(state.student.rid||''):'')}state.student.name=n;state.student.cls=cls;{const ab=$('#avs .avb.on');if(ab)state.student.av=ab.dataset.av}state.student.team=$('#stTeam').value;{const pn=$('#stPair').value.trim();state.pair=pn?{name:pn,d:(state.pair&&state.pair.d)||0}:null}state.student.school=$('#stSchool').value.trim()||SCHOOL;
     if(!state.pid){state.pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);ix.list.push({id:state.pid,name:n,cls:state.student.cls,av:state.student.av,last:Date.now()});saveIdx(ix);try{localStorage.removeItem(KEY+':draft')}catch(e){}}
     applyToday();flush();renderBar();renderMission();closeModal();after&&after();scheduleSync()}}
 function resetRuntime(){btabs=[];bactive=-1;liveOn=false;ta.dataset.key='';lastFeedback=null;newEntry=false;lastTick=Date.now()}
@@ -1558,7 +1563,7 @@ function openChooser(){const ix=loadIdx();const list=ix.list.slice().sort((a,b)=
   $('#mbox').querySelector('.who').onclick=ev=>{const b=ev.target.closest('[data-pid]');if(!b)return;closeModal();if(b.dataset.pid!==state.pid)switchTo(b.dataset.pid)};
   $('#newStu').onclick=()=>{closeModal();newStudent()};const em=$('#editMe');if(em)em.onclick=()=>openStudent()}
 function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0),0);const secs=T.filter(t=>state.done[t.id]===true).reduce((s,t)=>s+((state.att[t.id]||{}).spent||0),0);
-  return {av:avatarOf(),bd:Object.keys(state.badges||{}).length,team:state.student.team||'',partner:(state.pair&&state.pair.name)||'',path:state.support?'sup':advUnlocked()?'adv':'',tps:Object.fromEntries(Object.entries(state.tps||{}).filter(([k,v])=>v.s2).map(([k,v])=>[k,(v.a2||'').slice(0,400)])),sl:state.self||{},kw:state.kwl||{},en:Object.fromEntries(Object.entries(state.entry||{}).map(([k,v])=>[k,v.s])),xe:state.expert||null,ad:T.filter(t=>t.adv&&state.done[t.id]===true).length,name:state.student.name,cls:state.student.cls,school:state.student.school||SCHOOL,points:earnedOf(),max:curMax(),grade20:grade20(),
+  return {rid:state.student.rid||'',av:avatarOf(),bd:Object.keys(state.badges||{}).length,team:state.student.team||'',partner:(state.pair&&state.pair.name)||'',path:state.support?'sup':advUnlocked()?'adv':'',tps:Object.fromEntries(Object.entries(state.tps||{}).filter(([k,v])=>v.s2).map(([k,v])=>[k,(v.a2||'').slice(0,400)])),sl:state.self||{},kw:state.kwl||{},en:Object.fromEntries(Object.entries(state.entry||{}).map(([k,v])=>[k,v.s])),xe:state.expert||null,ad:T.filter(t=>t.adv&&state.done[t.id]===true).length,name:state.student.name,cls:state.student.cls,school:state.student.school||SCHOOL,points:earnedOf(),max:curMax(),grade20:grade20(),
   tasksDone:CORE.filter(t=>state.done[t.id]===true).length,helped:T.filter(t=>state.done[t.id]==='help').length,tasks:curTasks(),bonus:bonusOf(),
   tstat:T.map(t=>{const d=state.done[t.id],a=state.att[t.id]||{};return d===true?String(Math.min(9,a.n||1)):d==='help'?'h':a.status==='locked'?'x':(a.n?'f':'-')}).join(''),hstat:T.map(t=>String(Math.min(9,(state.hints||{})[t.id]||0))).join(''),
   mk:Object.fromEntries(Object.entries(state.mist||{}).filter(([k])=>!k.startsWith('task:')).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([k,v])=>[k,v.n])),
@@ -1570,7 +1575,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'596441f4e13b',hash:'7250570626bcacf8b7e13322422041c2d073f174a4b4c026693ebebfe66a4287'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'351fb44d1e4c',hash:'5aa327ac092835fd532c44103bb8f88e656b632ff94742cb3d1b335c366ca668'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1587,7 +1592,7 @@ const FB=(()=>{if(!STANDALONE||!FBCFG)return null;let ready=null,fs=null,uid=nul
  const withT=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(false),ms))]);
  const FDB={doc(p){const r=()=>fs.doc(p);return {get:()=>r().get(),set:d=>r().set(d),update:d=>r().update(d),onSnapshot:(cb,er)=>r().onSnapshot(cb,er||(()=>{}))}},
    collection(c){return {onSnapshot:(cb,er)=>fs.collection(c).onSnapshot(cb,er||(()=>{}))}}};
- const HY={doc(p){if(/^results(\/|$)/.test(p))return FDB.doc(p);if(/^config\//.test(p)&&!teacherOn)return {get:async()=>({exists:false,data:()=>undefined}),set:async()=>{},update:async()=>{},onSnapshot:()=>()=>{}};return LDB.doc(p)},
+ const HY={doc(p){if(/^(results|pub)(\/|$)/.test(p))return FDB.doc(p);if(/^config\//.test(p)&&!teacherOn)return {get:async()=>({exists:false,data:()=>undefined}),set:async()=>{},update:async()=>{},onSnapshot:()=>()=>{}};return LDB.doc(p)},
    collection(c){return c==='results'?FDB.collection(c):LDB.collection(c)}};
  const USER={id:async()=>uid,isOwner:async()=>false};
  return {async caps(){const ok=await withT(init(),9000);return ok?[HY,USER]:null},
@@ -1598,11 +1603,11 @@ async function caps(){if(STANDALONE){if(FB){const c=await FB.caps();if(c){if(tea
 function summaryText(){const e=resultEntry();return `نتيجة التطبيق العملي — وحدة تصميم مواقع الويب\nالطالبة: ${e.name||'—'}\nالصف: ${e.cls}\nالمدرسة: ${e.school}\nالنقاط: ${e.points} / ${e.max}\nالدرجة: ${e.grade20} / 20\nالمهام المنجزة: ${e.tasksDone} / ${e.tasks}${e.helped?` (و${e.helped} بعرض الحل)`:''}\nالمحاولات المستخدمة: ${e.attempts} · الوقت: ${fmtSec(e.timeSec)} دقيقة\n`+e.lessons.map(l=>`الدرس ${l.n}: ${l.points}/${l.max} نقطة`).join('\n')+`\nالتاريخ: ${new Date().toLocaleString('ar-OM')}`}
 const RSECRET='mlab:musandam:ibtisam-alrawas:khawla-bint-hakeem';
 function fnv(str){let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36)}
-function resultCode(){const e=resultEntry();const o={av:e.av,bd:e.bd,tm:e.team,pt:e.partner,ph:e.path,tp:e.tps,sl:e.sl,kw:e.kw,en:e.en,xe:e.xe,ad:e.ad,n:e.name,c:e.cls,s:e.school,p:e.points,m:e.max,g:e.grade20,d:e.tasksDone,h:e.helped,t:e.tasks,a:e.attempts,ts:e.timeSec,l:e.locked,L:e.lessons.map(x=>[x.points,x.max,x.done,x.total]),at:e.sentAt,k:e.tstat,hh:e.hstat,mk:e.mk,ex:e.ex,pr:e.pr,b:e.bonus,pj:e.pj,pn:e.pn,pc:e.pc};
+function resultCode(){const e=resultEntry();const o={ri:e.rid,av:e.av,bd:e.bd,tm:e.team,pt:e.partner,ph:e.path,tp:e.tps,sl:e.sl,kw:e.kw,en:e.en,xe:e.xe,ad:e.ad,n:e.name,c:e.cls,s:e.school,p:e.points,m:e.max,g:e.grade20,d:e.tasksDone,h:e.helped,t:e.tasks,a:e.attempts,ts:e.timeSec,l:e.locked,L:e.lessons.map(x=>[x.points,x.max,x.done,x.total]),at:e.sentAt,k:e.tstat,hh:e.hstat,mk:e.mk,ex:e.ex,pr:e.pr,b:e.bonus,pj:e.pj,pn:e.pn,pc:e.pc};
   const b=btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');return 'MSN1.'+b+'.'+fnv(RSECRET+b)}
 function parseCodes(text){const out=[];let bad=0;const re=/MSN1\.([A-Za-z0-9_-]+)\.([0-9a-z]+)/g;let m;
   while((m=re.exec(text||''))){if(fnv(RSECRET+m[1])!==m[2]){bad++;continue}try{const o=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
-    if(!o.n)throw 0;out.push({av:o.av,bd:o.bd,team:o.tm,partner:o.pt,path:o.ph,tps:o.tp,sl:o.sl,kw:o.kw,en:o.en,xe:o.xe,ad:o.ad,name:o.n,cls:o.c,school:o.s,points:o.p,max:o.m,grade20:o.g,tasksDone:o.d,helped:o.h,tasks:o.t,attempts:o.a,timeSec:o.ts,locked:o.l,lessons:(o.L||[]).map((x,i)=>({n:i+1,points:x[0],max:x[1],done:x[2],total:x[3]})),sentAt:o.at,tstat:o.k,hstat:o.hh,mk:o.mk,ex:o.ex,pr:o.pr,bonus:o.b,pj:o.pj,pn:o.pn,pc:o.pc,via:'code'})}catch(e){bad++}}
+    if(!o.n)throw 0;out.push({rid:o.ri||'',av:o.av,bd:o.bd,team:o.tm,partner:o.pt,path:o.ph,tps:o.tp,sl:o.sl,kw:o.kw,en:o.en,xe:o.xe,ad:o.ad,name:o.n,cls:o.c,school:o.s,points:o.p,max:o.m,grade20:o.g,tasksDone:o.d,helped:o.h,tasks:o.t,attempts:o.a,timeSec:o.ts,locked:o.l,lessons:(o.L||[]).map((x,i)=>({n:i+1,points:x[0],max:x[1],done:x[2],total:x[3]})),sentAt:o.at,tstat:o.k,hstat:o.hh,mk:o.mk,ex:o.ex,pr:o.pr,bonus:o.b,pj:o.pj,pn:o.pn,pc:o.pc,via:'code'})}catch(e){bad++}}
   return {entries:out,bad}}
 function resultMessage(){return summaryText()+'\n\nرمز التحقق (لا تعدّليه):\n'+resultCode()}
 function showCodeBox(box,note){box.innerHTML=`${note?`<div class="info">${note}</div>`:''}<p style="font-size:12.5px;margin:10px 0 0">انسخي الرسالة كاملة وأرسليها للمعلمة عبر واتساب أو منصة المدرسة. رمز التحقق في آخرها يثبت صحة النتيجة.</p><textarea class="copybox" readonly id="copyRes" style="min-height:150px">${esc(resultMessage())}</textarea><div class="actions"><button class="btn primary" type="button" id="copyResBtn">نسخ رسالة النتيجة</button></div>`;
@@ -2458,7 +2463,7 @@ function normName(s){return String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[�
 function rosterList(){const out=[];Object.entries(rosterData.classes||{}).forEach(([c,arr])=>(arr||[]).forEach(x=>out.push(Object.assign({cls:c},x))));return out}
 function rosterClasses(){return Object.keys(rosterData.classes||{}).filter(c=>(rosterData.classes[c]||[]).length).sort((a,b)=>(secOf(a)||99)-(secOf(b)||99))}
 /* which roster student does a result belong to? */
-function matchRoster(r){const lk=(rosterData.links||{})[rkey(r)];if(lk){const hit=rosterList().find(x=>x.id===lk);if(hit)return {hit}}
+function matchRoster(r){if(r.rid){const h=rosterList().find(x=>x.id===r.rid);if(h)return {hit:h}}const lk=(rosterData.links||{})[rkey(r)];if(lk){const hit=rosterList().find(x=>x.id===lk);if(hit)return {hit}}
   const sec=secOf(r.cls);const pool=rosterList().filter(x=>secOf(x.cls)===sec);if(!pool.length)return {hit:null,cands:[]};
   const t=normName(r.name).split(' ');if(!t[0])return {hit:null,cands:[]};
   const full=pool.filter(x=>normName(x.n)===t.join(' '));if(full.length===1)return {hit:full[0]};
@@ -2470,8 +2475,32 @@ function rosterJoin(){const by={},unmatched=[];const seen={};
   dashRows.forEach(r=>{const k=rkey(r);if(seen[k]&&String(seen[k].sentAt||'')>=String(r.sentAt||''))return;seen[k]=r});
   Object.values(seen).forEach(r=>{const m=matchRoster(r);if(m.hit)(by[m.hit.id]=by[m.hit.id]||[]).push(r);else unmatched.push({r,cands:m.cands||[]})});
   const res={};Object.entries(by).forEach(([id,l])=>res[id]=bestResult(l));return {res,unmatched}}
+const pubPath=()=>(typeof STANDALONE!=='undefined'&&STANDALONE)?'pub/names':'config/names';
+function shortNames(list){const W=n=>String(n).replace(/\s+/g,' ').trim().split(' ').filter(w=>!['بن','بنت','ابن'].includes(w));
+  const mk=(w,k)=>{if(w.length<=2)return w.join(' ');let last=w[w.length-1];const pre=w[w.length-2];if(['بيت','آل','ال','ابو','أبو','بو','عبد'].includes(pre))last=pre+' '+last;return k?w.slice(0,1+k).join(' ')+' '+last:w[0]+' '+last};
+  const out=list.map(x=>({id:x.id,w:W(x.n),k:0}));for(let pass=0;pass<4;pass++){const seen={};out.forEach(o=>{const s=mk(o.w,o.k);(seen[s]=seen[s]||[]).push(o)});let again=false;Object.values(seen).forEach(g=>{if(g.length>1){g.forEach(o=>{if(o.k<o.w.length-2){o.k++;again=true}})}});if(!again)break}
+  return out.map(o=>[o.id,mk(o.w,o.k)])}
+function buildPub(){const c={};Object.entries(rosterData.classes||{}).forEach(([k,l])=>{if((l||[]).length)c[k]=shortNames(l)});return {at:new Date().toISOString(),c}}
+let pubP=null;
+function loadPub(){if(!pubP)pubP=(async()=>{try{const [db]=await caps();if(!db)return null;const s=await db.doc(pubPath()).get();return s.exists?s.data():null}catch(e){return null}})();return pubP}
 async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل المنصة غير متاح في هذا العرض.');return false}
-  try{await db.doc('results/roster').set(JSON.parse(JSON.stringify(rosterData)));if(msg)toast(msg);return true}catch(e){toast('لم يُحفظ الكشف ('+esc(e&&e.code||'خطأ')+').');return false}}
+  try{await db.doc('results/roster').set(JSON.parse(JSON.stringify(rosterData)));try{await db.doc(pubPath()).set(buildPub())}catch(e){console.warn('pub',e)}if(msg)toast(msg);return true}catch(e){toast('لم يُحفظ الكشف ('+esc(e&&e.code||'خطأ')+').');return false}}
+
+function bindNameSuggest(){const inp=$('#stName'),box=$('#stSug'),sel=$('#stCls');if(!inp||!box)return;let items=[],act=-1,data=null;
+  loadPub().then(d=>{data=d;if(d&&d.c&&Object.keys(d.c).length)inp.placeholder='اكتبي أول حرفين من اسمكِ ثم اختاريه من القائمة'});
+  const hide=()=>{box.hidden=true;inp.setAttribute('aria-expanded','false');act=-1};
+  const pick=i=>{const it=items[i];if(!it)return;inp.value=it.n;inp.dataset.rid=it.id;inp.dataset.pick=it.n;if(it.c!==sel.value&&[...sel.options].some(o=>o.value===it.c))sel.value=it.c;hide();toast('مرحباً '+esc(it.n.split(' ')[0])+'! 🌸')};
+  const draw=()=>{const q=normName(inp.value).trim();if(!data||!data.c||q.length<2){hide();return}
+    const match=n=>{const w=normName(n).split(' ');return w.some(x=>x.startsWith(q))||normName(n).startsWith(q)};
+    const mine=(data.c[sel.value]||[]).filter(([id,n])=>match(n)).map(([id,n])=>({id,n,c:sel.value}));
+    const other=mine.length?[]:Object.entries(data.c).filter(([c])=>c!==sel.value).flatMap(([c,l])=>l.filter(([id,n])=>match(n)).map(([id,n])=>({id,n,c})));
+    const fw=it=>normName(it.n).startsWith(q)?0:1;items=mine.concat(other).sort((a,b)=>fw(a)-fw(b)).slice(0,8);if(!items.length){box.innerHTML='<div class="sugnone">لم أجد اسماً يبدأ بهذه الحروف في '+esc(sel.value)+'. تأكدي من الصف، أو أكملي كتابة اسمكِ.</div>';box.hidden=false;return}
+    box.innerHTML=items.map((it,i)=>`<button type="button" role="option" class="sugit ${i===act?'on':''}" data-i="${i}">${esc(it.n)}${it.c!==sel.value?` <small>${esc(it.c.replace('الصف ',''))}</small>`:''}</button>`).join('');box.hidden=false;inp.setAttribute('aria-expanded','true')};
+  inp.addEventListener('input',()=>{if(inp.value!==inp.dataset.pick){delete inp.dataset.rid}act=-1;draw()});
+  sel.addEventListener('change',()=>{if(inp.dataset.rid&&inp.value===inp.dataset.pick){delete inp.dataset.rid}draw()});
+  inp.addEventListener('keydown',e=>{if(box.hidden||!items.length)return;if(e.key==='ArrowDown'){act=Math.min(act+1,items.length-1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){act=Math.max(act-1,0);draw();e.preventDefault()}else if(e.key==='Enter'&&act>=0){pick(act);e.preventDefault()}else if(e.key==='Escape'){hide();e.stopPropagation()}});
+  box.addEventListener('mousedown',e=>{const b=e.target.closest('[data-i]');if(b){e.preventDefault();pick(+b.dataset.i)}});
+  inp.addEventListener('blur',()=>setTimeout(hide,150))}
 
 /* ---------- parsing pasted text / CSV / Excel ---------- */
 function parseRosterRows(rows,fallbackCls){rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(Boolean));if(!rows.length)return [];
@@ -2599,7 +2628,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='d5bd20b7b8';
+const BUILD_ID='7c78a04c21';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
