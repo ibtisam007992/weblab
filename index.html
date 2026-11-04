@@ -1575,7 +1575,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'351fb44d1e4c',hash:'5aa327ac092835fd532c44103bb8f88e656b632ff94742cb3d1b335c366ca668'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'d313148b7b4f',hash:'e0c35f9f840a4541ae88d62f42aea9dedd45f2044aa681cad0192f1734ce8567'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2482,7 +2482,7 @@ function shortNames(list){const W=n=>String(n).replace(/\s+/g,' ').trim().split(
   return out.map(o=>[o.id,mk(o.w,o.k)])}
 function buildPub(){const c={};Object.entries(rosterData.classes||{}).forEach(([k,l])=>{if((l||[]).length)c[k]=shortNames(l)});return {at:new Date().toISOString(),c}}
 let pubP=null;
-function loadPub(){if(!pubP)pubP=(async()=>{try{const [db]=await caps();if(!db)return null;const s=await db.doc(pubPath()).get();return s.exists?s.data():null}catch(e){return null}})();return pubP}
+function loadPub(){if(!pubP)pubP=(async()=>{try{const [db]=await caps();if(!db)return null;const s=await db.doc(pubPath()).get();return s.exists?s.data():null}catch(e){return null}})().then(d=>{if(!d)setTimeout(()=>{pubP=null},1000);return d});return pubP}
 async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل المنصة غير متاح في هذا العرض.');return false}
   try{await db.doc('results/roster').set(JSON.parse(JSON.stringify(rosterData)));try{await db.doc(pubPath()).set(buildPub())}catch(e){console.warn('pub',e)}if(msg)toast(msg);return true}catch(e){toast('لم يُحفظ الكشف ('+esc(e&&e.code||'خطأ')+').');return false}}
 
@@ -2490,7 +2490,7 @@ function bindNameSuggest(){const inp=$('#stName'),box=$('#stSug'),sel=$('#stCls'
   loadPub().then(d=>{data=d;if(d&&d.c&&Object.keys(d.c).length)inp.placeholder='اكتبي أول حرفين من اسمكِ ثم اختاريه من القائمة'});
   const hide=()=>{box.hidden=true;inp.setAttribute('aria-expanded','false');act=-1};
   const pick=i=>{const it=items[i];if(!it)return;inp.value=it.n;inp.dataset.rid=it.id;inp.dataset.pick=it.n;if(it.c!==sel.value&&[...sel.options].some(o=>o.value===it.c))sel.value=it.c;hide();toast('مرحباً '+esc(it.n.split(' ')[0])+'! 🌸')};
-  const draw=()=>{const q=normName(inp.value).trim();if(!data||!data.c||q.length<2){hide();return}
+  const draw=()=>{const q=normName(inp.value).trim();if(q.length<2){hide();return}if(!data||!data.c||!Object.keys(data.c).length){box.innerHTML='<div class="sugnone">لا توجد قائمة أسماء لصفكِ بعد؛ اكتبي اسمكِ الثلاثي كاملاً.</div>';box.hidden=false;return}
     const match=n=>{const w=normName(n).split(' ');return w.some(x=>x.startsWith(q))||normName(n).startsWith(q)};
     const mine=(data.c[sel.value]||[]).filter(([id,n])=>match(n)).map(([id,n])=>({id,n,c:sel.value}));
     const other=mine.length?[]:Object.entries(data.c).filter(([c])=>c!==sel.value).flatMap(([c,l])=>l.filter(([id,n])=>match(n)).map(([id,n])=>({id,n,c})));
@@ -2628,7 +2628,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='7c78a04c21';
+const BUILD_ID='eadc2d7522';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
