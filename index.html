@@ -563,7 +563,7 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
 .whob b{font-size:16px}
 #soundBtn{min-width:40px}
 @media (prefers-reduced-motion: reduce){.app *,.mbox *,.bpop{animation:none!important;transition:none!important}}
-</style>
+.updbar{position:fixed;inset-inline:0;top:0;z-index:200;background:#0e7c86;color:#fff;padding:8px 14px;text-align:center;font-weight:700;box-shadow:0 4px 14px #0004}.updbar button{margin-inline-start:10px;border:0;border-radius:8px;padding:5px 14px;font:inherit;font-weight:800;background:#ffc23d;color:#222;cursor:pointer}</style>
 </head>
 <body>
 
@@ -1570,7 +1570,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'644e5ba7f577',hash:'7698dab153e0c2110303f2f2d0a569bf60cda24e9879a1beecc3c85d1ce08f30'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'596441f4e13b',hash:'7250570626bcacf8b7e13322422041c2d073f174a4b4c026693ebebfe66a4287'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2475,7 +2475,7 @@ async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل ا�
 
 /* ---------- parsing pasted text / CSV / Excel ---------- */
 function parseRosterRows(rows,fallbackCls){rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(Boolean));if(!rows.length)return [];
-  const W=Math.max(...rows.map(r=>r.length));const isName=v=>{if(!/[\u0600-\u06FF]/.test(v)||/[0-9٠-٩:()\/]/.test(v))return false;const w=normName(v).split(' ').filter(Boolean);const STOP=['الصف','عاشر','العاشر','الاسم','اسم','الطالب','الطالبه','المجموع','المستوي','استماره','الشعبه','تقييم','درجه','الفصل','المشروع','معلمه','معلم','الماده','مديره','المديره','توقيع','مشرفه'];return w.length>=2&&w.length<=9&&!w.some(x=>STOP.includes(x))};
+  const W=Math.max(...rows.map(r=>r.length));const isName=v=>{if(!/[\u0600-\u06FF]/.test(v)||/[0-9٠-٩:()\/]/.test(v))return false;const w=normName(v).split(' ').filter(Boolean);const STOP=['الصف','عاشر','العاشر','الاسم','اسم','الطالب','الطالبه','المجموع','المستوي','استماره','الشعبه','تقييم','درجه','الفصل','المشروع','معلمه','معلم','الماده','مديره','المديره','توقيع','مشرفه','حل','المشكلات','التحليل','والاستنتاج','التخطيط','التنفيذ','العملي','العمليات','تطبيق','الاتصال','وعمل','الفريق','السجل','السنوي','الحوار','الانشطه','العمليه','الاختبار','القصير','نهايه','العام','الدراسي','الحلقه','الثانيه','لماده','تقنيه','المعلومات','الملاحظات','ملاحظات','الغياب'];return w.length>=2&&w.length<=9&&!w.some(x=>STOP.includes(x))};
   const isCls=v=>/(عاشر|الصف)/.test(v)||/^\s*[0-9٠-٩]{1,2}\s*[\/\-]\s*[0-9٠-٩]{1,2}\s*$/.test(v);
   let nc=-1,nb=0,cc=-1,cb=0;for(let i=0;i<W;i++){const n=rows.filter(r=>isName(r[i]||'')).length,c=rows.filter(r=>isCls(r[i]||'')).length;if(n>nb){nb=n;nc=i}if(c>cb){cb=c;cc=i}}
   if(nc<0)return [];if(cc===nc||cb<rows.length*0.3)cc=-1;const out=[];
@@ -2598,6 +2598,10 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   $('#repPrint').onclick=()=>{document.querySelectorAll('[data-note]').forEach(t=>{const p=t.nextElementSibling;if(p)p.textContent=t.value||'................................................................................................'});document.body.classList.add('printrep');setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('printrep'),400)},60)};
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
+
+const BUILD_ID='d5bd20b7b8';
+(function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
+setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
 function renderAll(){renderBar();renderMission();renderVS()}
 if(innerWidth<=700)state.side=null;
