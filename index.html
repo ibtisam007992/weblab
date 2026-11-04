@@ -1059,7 +1059,7 @@ const fmt=ms=>{ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return ar(String(Mat
 const fmtSec=sec=>{sec=Math.round(sec||0);return ar(Math.floor(sec/60))+':'+ar(String(sec%60).padStart(2,'0'))};
 function startAttempt(t){if(!state.student.name){(loadIdx().list.length?openChooser:openStudent)(()=>startAttempt(t));toast('اكتبي اسمك أولاً لتصل نتيجتك للمعلمة.');return}
   const a=A(t);if(state.done[t.id]||a.status==='run'||a.status==='locked'||a.n>=MAX_ATT)return;if(!taskOpen(t)){toast('هذه المهمة ليست ضمن مهام حصة اليوم.');return}
-  a.n++;a.used=0;a.status='run';if(t.bug){const B=t.bug;if(B.ws==='site'&&state.folder!=='site')state.folder='site';if(!F(B.ws,B.file))setF(B.ws,B.file,B.content);setTimeout(()=>{openFile(B.ws,B.file);if(innerWidth<=880)setView('code')},60)}a.reason='';lastFeedback=null;if(t.type==='quiz')state.quiz[t.id]={};if(t.type==='parts')state.parts=0;
+  a.n++;a.used=0;a.status='run';ensureSite(t);if(t.bug){const B=t.bug;if(B.ws==='site'&&state.folder!=='site')state.folder='site';if(!F(B.ws,B.file))setF(B.ws,B.file,B.content);setTimeout(()=>{openFile(B.ws,B.file);if(innerWidth<=880)setView('code')},60)}a.reason='';lastFeedback=null;if(t.type==='quiz')state.quiz[t.id]={};if(t.type==='parts')state.parts=0;
   persist();renderMission();toast('بدأ المؤقت: '+ar(taskMin(t))+' دقائق — المحاولة '+ar(a.n)+' من '+ar(MAX_ATT));}
 function closeAttempt(t){const a=A(t);if(a.status==='run'){a.spent+=Math.min(a.used||0,taskMin(t)*60000)/1000}}
 function failAttempt(t,reason){const a=A(t);if(a.status!=='run')return;closeAttempt(t);state.streak=0;a.reason=reason;a.status=a.n>=MAX_ATT?'locked':'fail';persist();renderBar();renderMission();scheduleSync();
@@ -1102,7 +1102,7 @@ function setView(v){$('#stage').dataset.view=v;document.querySelectorAll('#viewt
 
 /* ================= MISSION PANEL ================= */
 let lastFeedback=null, resetArm=false, lastCardId=null;
-function renderMission(){
+function renderMission(){if(!ensuring)ensureSite(curTask());
   if(!lessonOpen(state.lesson)){const td=todayLesson();$('#mission').innerHTML=`<div class="lockcard"><div style="font-size:34px">🔒</div><b>الدرس ${ar(state.lesson)} مغلق حالياً</b><span style="color:var(--muted)">تفتح المعلمة الدروس حسب خطة الحصص.</span>${td?`<button class="btn primary" type="button" id="goToday">انتقلي إلى درس اليوم: الدرس ${ar(td)}</button>`:''}${dbPlanLoaded?'':codeFormHTML()}</div>`;const g=$('#goToday');if(g)g.onclick=()=>{state.lesson=td;persist();renderAll()};bindCodeForm();$('#vsc').classList.remove('parts-mode');return}
   const L=LESSONS[state.lesson-1],list=tasksOf(L.n),t=curTask(),idx=list.indexOf(t);
   const fb=lastFeedback&&lastFeedback.id===t.id?lastFeedback:null;
@@ -1193,6 +1193,19 @@ function runCheck(explicit){const t=curTask();const a=A(t);const was=!!state.don
   if(r.ok&&!was){scheduleSync();const L=t.L;if(coreOf(L).length&&coreOf(L).every(x=>state.done[x.id]))toast('أكملتِ الدرس '+ar(L)+'! '+(dbPlanLoaded?'وصلت نتيجتك إلى المعلمة.':'انسخي رسالة نتيجتك من «النتيجة والإرسال» وأرسليها للمعلمة.'),5500);else toast(cheer()+' +'+ar(Math.max(0,pts(t)-0.5*paidHints(t)))+' نقاط — «'+t.title+'»');onTaskDone(t,coreOf(L).length>0&&coreOf(L).every(x=>state.done[x.id]));}
 }
 function autoCheck(){const t=curTask();if(state.done[t.id]||A(t).status!=='run')return;const r=t.check();if(r.ok)runCheck(false)}
+
+/* ---------- the Musandam site is ready in later lessons: missing pages are filled in from earlier lessons ---------- */
+let ensuring=false;const baseCache={};const SEED_AFTER='l2-pages';
+const seedable=x=>x.L>=2&&!x.type&&!x.bug&&!x.adv&&!x.challenge&&!/^real-/.test(x.id)&&typeof x.solve==='function';
+function baselineFor(t){if(baseCache[t.id])return baseCache[t.id];const idx=T.indexOf(t);const snap=JSON.stringify(state);
+  try{state.ws.site.files={};T.slice(0,idx).filter(seedable).forEach(x=>{try{x.solve()}catch(e){}});baseCache[t.id]=JSON.parse(JSON.stringify(state.ws.site.files||{}))}catch(e){baseCache[t.id]={}}
+  state=JSON.parse(snap);return baseCache[t.id]}
+function ensureSite(t){if(!t||ensuring)return;const k=T.indexOf(t),gate=T.findIndex(x=>x.id===SEED_AFTER);if(k<0||gate<0||k<=gate||t.L>5)return;
+  if(!state.ws||!state.ws.site)return;ensuring=true;try{const base=baselineFor(t);const have=state.ws.site.files||{};const miss=Object.keys(base).filter(f=>!/^(bug_|adv_)/i.test(f)&&!have[f]);if(!miss.length)return;
+  miss.forEach(f=>{have[f]=JSON.parse(JSON.stringify(base[f]))});state.ws.site.files=have;if(!state.folder)state.folder='site';state.liveServer=true;
+    if(!state.tabs.some(x=>x.ws==='site'&&x.path==='index.html')&&F('site','index.html')){try{openFile('site','index.html')}catch(e){}}
+    persist();renderVS();const L=t.L;state.seeded=state.seeded||{};if(!state.seeded[L]){state.seeded[L]=1;setTimeout(()=>toast('📂 صفحات موقع مسندم جاهزة من الدروس السابقة ('+miss.filter(f=>/\.(html|css)$/.test(f)).map(esc).join('، ')+'). أضيفي عليها وسوم هذا الدرس.',6000),300)}}
+  finally{ensuring=false}}
 
 function prepLesson(n){ // rebuild site files as they are at the start of lesson n
   state.ws.site.files={};const keepQuiz=JSON.parse(JSON.stringify(state.quiz)),keepParts=state.parts,keepLive=state.liveServer,keepPub=JSON.parse(JSON.stringify(state.pub));
@@ -1591,7 +1604,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'864fd866621c',hash:'10f0cc272a28efea7b180b2e3145e21fc9393315758e6cd4ca760c7866838cff'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'54fc1db78bf6',hash:'c3f30099280ddfbcdd1be98192926f1e559c1d21c23f463842543560b81d1718'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2670,7 +2683,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='43cfb32d55';
+const BUILD_ID='f7c419f4c9';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
