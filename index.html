@@ -537,6 +537,20 @@ body.vmax.vsplit .browser{position:fixed;top:8px;bottom:8px;left:8px;right:calc(
 .tdrop[open]>summary{border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}
 .tdrop .tlist{max-height:46vh;overflow:auto}
 .asbtn{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0 6px}.asbtn:hover{background:rgba(255,255,255,.12)}
+
+.gate{position:fixed;inset:0;z-index:85;background:radial-gradient(1200px 600px at 85% -10%,var(--teal-soft),transparent),radial-gradient(900px 500px at -10% 110%,var(--lav-soft),transparent),var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
+body.gated{overflow:hidden}
+.gbox{width:min(920px,100%);display:flex;flex-direction:column;gap:18px}
+.ghead{display:flex;gap:14px;align-items:center}.ghead h1{margin:0;font-family:var(--font-display);font-size:34px;color:var(--ink)}.ghead p{margin:2px 0;color:var(--muted)}.ghead small{color:var(--accent);font-weight:700}
+.brand-mark.big{width:64px;height:64px;border-radius:18px}
+.gcols{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}@media (max-width:760px){.gcols{grid-template-columns:1fr}}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 34px #0e7c8614}
+.gcard h2{margin:0 0 4px;font-size:20px}.gcard label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:14px}
+.gcard input,.gcard select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)}
+.gcard input:focus,.gcard select:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+.gbtn{font-size:16px;padding:11px 18px;justify-content:center}.gnote{color:var(--muted);font-size:12px}
+.tcard{background:linear-gradient(180deg,var(--surface),var(--surface-2))}.tcard p{margin:0;color:var(--muted);font-size:14px;flex:1}
+.htime{font-style:normal;margin-inline-start:6px;color:var(--teal);font-weight:700}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -704,6 +718,19 @@ body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transpare
   </main>
 </div>
 <div class="toast" id="toast" dir="rtl" hidden></div>
+<div class="gate" id="gate" dir="rtl" hidden><div class="gbox">
+  <div class="ghead"><div class="brand-mark big" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg></div>
+   <div><h1>صانعات الويب</h1><p>مختبر مشروع موقع محافظة مسندم · تقنية المعلومات · الصف العاشر</p><small>إعداد المعلمة: ابتسام الرواس · مدرسة خولة بنت حكيم للبنات (٩–١٢)</small></div></div>
+  <div class="gcols">
+   <form class="gcard" id="gForm" autocomplete="off"><h2>👩‍🎓 دخول الطالبة</h2>
+    <label>الصف والشعبة<select id="gCls"></select></label>
+    <label class="namefield">اسمكِ<input id="gName" placeholder="اكتبي أول حرفين من اسمكِ ثم اختاريه" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="gSug" required><div class="sugbox" id="gSug" role="listbox" hidden></div></label>
+    <label>رمز الدرس <small>(من السبورة، إن طلبته المعلمة)</small><input id="gCode" inputmode="numeric" placeholder="٨ أرقام من السبورة" dir="auto"></label>
+    <div id="gMsg"></div>
+    <button class="btn primary gbtn" type="submit">دخول ←</button>
+    <small class="gnote">تنتهي الجلسة تلقائياً بعد ساعة، ويُحفظ عملكِ وتكملين من حيث توقفتِ في الدخول القادم.</small></form>
+   <div class="gcard tcard"><h2>👩‍🏫 المعلمة</h2><p>لوحة المتميزات، والنتائج المباشرة، وكشوف الصفوف والتقارير، ورموز الدروس.</p><button class="btn gbtn" type="button" id="gTeacher">🔒 واجهة المعلمة</button></div>
+  </div></div></div>
 <div class="modal" id="modal" dir="rtl" hidden><div class="mbox" id="mbox"></div></div>
 
 <script>
@@ -1103,8 +1130,8 @@ function renderBar(){
 $('#lessons').addEventListener('click',e=>{const b=e.target.closest('[data-l]');if(!b)return;if(!lessonOpen(+b.dataset.l)){toast(+b.dataset.l===6?'🚀 المستوى المتقدم للمجيدات: أنجزي ١٢ مهمة على الأقل، ٧٠٪ منها من أول محاولة دون تلميح، أو اطلبي رمزه من معلمتك.':'الدرس '+ar(b.dataset.l)+' مغلق حالياً؛ ستفتحه المعلمة في موعده.',5000);return}state.lesson=+b.dataset.l;persist();renderAll()});
 $('#teacherBtn').onclick=()=>openTeacher();
 let teacherOn=false;try{teacherOn=sessionStorage.getItem('mlab-t')==='1'}catch(e){}
-function setTeacher(v){teacherOn=v;try{v?sessionStorage.setItem('mlab-t','1'):sessionStorage.removeItem('mlab-t')}catch(e){}renderBar();renderMission()}
-$('#studentBtn').onclick=()=>openChooser();
+function setTeacher(v){teacherOn=v;try{v?sessionStorage.setItem('mlab-t','1'):sessionStorage.removeItem('mlab-t')}catch(e){}renderBar();renderMission();if(v)hideGate();else if(!state.pid)setTimeout(showGate,50)}
+$('#studentBtn').onclick=()=>{if(state.student.name&&state.pid)openStudent();else showGate()};
 $('#resultBtn').onclick=()=>openResult();
 $('#viewtabs').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;setView(b.dataset.v)});
 function setView(v){$('#stage').dataset.view=v;document.querySelectorAll('#viewtabs button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===v))}
@@ -1615,7 +1642,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'0f32dcffab6b',hash:'f59e0a4f8f75360d4a99210c77547bf273e26df9cc230fdee66049c6602c32d4'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'bafaeb7b1764',hash:'9b1fb19a83c8c06d8370bb28c1559ac811e894015d8d1582f2adb8cdf38b5990'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -2149,15 +2176,15 @@ $('.titlebar').addEventListener('dblclick',e=>{if(e.target.closest('button'))ret
 
 /* ---------- the student's own name on her page + sign out ---------- */
 function helloCard(){const st=state.student;if(!st.name)return '';const first=String(st.name).trim().split(/\s+/)[0];const h=new Date().getHours();const g=h<12?'صباح الخير':'مساء الخير';
-  return `<div class="hello"><span class="hav">${st.av||'🌸'}</span><div class="htxt"><small>${g}</small><b>${esc(first)}</b><span>${esc(st.name)} · ${esc(String(st.cls||'').replace('الصف ',''))}</span></div><button class="btn hout" type="button" id="logoutBtn" title="تسجيل الخروج وحفظ عملكِ">↩ خروج</button></div>`}
-function confirmLogout(){if(!state.student.name){openChooser();return}
+  return `<div class="hello"><span class="hav">${st.av||'🌸'}</span><div class="htxt"><small>${g}</small><b>${esc(first)}</b><span>${esc(st.name)} · ${esc(String(st.cls||'').replace('الصف ',''))} <em id="hTime" class="htime">${typeof sessionLeft==='function'&&sessionLeft()?'⏳ '+ar(Math.ceil(sessionLeft()/60000))+' د':''}</em></span></div><button class="btn hout" type="button" id="logoutBtn" title="تسجيل الخروج وحفظ عملكِ">↩ خروج</button></div>`}
+function confirmLogout(){if(!state.student.name){showGate();return}
   modal(`<h2>تسجيل الخروج</h2><p style="margin:0">هل تريدين الخروج يا <b>${esc(state.student.name.split(' ')[0])}</b>؟ سيُحفظ عملكِ على هذا الجهاز وتُرسل نتيجتكِ للمعلمة، وتكملين من حيث توقفتِ عندما تختارين اسمكِ في المرة القادمة.</p>
   <div class="actions" style="margin-top:16px"><button class="btn primary" type="button" id="doLogout">نعم، خروج</button><button class="btn" type="button" data-close-modal>إلغاء</button></div><div id="loMsg"></div>`);
   $('#doLogout').onclick=async ev=>{const b=ev.currentTarget;b.disabled=true;b.textContent='جارٍ الحفظ…';const name=state.student.name.split(' ')[0];
     flush();try{await Promise.race([pushResult(),new Promise(r=>setTimeout(r,5000))])}catch(e){}
     try{if(typeof extWin!=='undefined'&&extWin&&!extWin.closed)extWin.close()}catch(e){}
     state=freshState();try{localStorage.removeItem(KEY+':draft')}catch(e){}resetRuntime();applyToday();renderAll();renderBrowser();closeModal();
-    toast('👋 إلى اللقاء يا '+esc(name)+'! حُفظ عملكِ.',3500);setTimeout(()=>openChooser(),400)}}
+    endSession();toast('👋 إلى اللقاء يا '+esc(name)+'! حُفظ عملكِ.',3500);showGate()}}
 document.addEventListener('click',e=>{if(e.target.closest('#logoutBtn')){e.preventDefault();confirmLogout()}});
 
 
@@ -2169,6 +2196,41 @@ function autoSaveNow(){if(!autoSaveOn())return;let n=0;Object.values(state.ws||{
   persist();renderTabs();renderStatus();lintOnSave(true);reloadBrowserAfterSave();autoCheck();scheduleSync()}
 function toggleAutoSave(){state.autoSave=!autoSaveOn();persist();renderStatus();if(autoSaveOn()){autoSaveNow();toast('💾 الحفظ التلقائي مفعّل: يُحفظ عملكِ بعد ثانية من توقفكِ عن الكتابة.',3500)}else toast('أُوقف الحفظ التلقائي؛ احفظي بـ Ctrl+S.',3000)}
 document.addEventListener('click',e=>{if(e.target.closest('#asBtn')){e.preventDefault();toggleAutoSave()}});
+
+
+/* ---------- first page: student sign-in or teacher; one-hour sessions ---------- */
+const SESS='musandam-lab-session',SESSION_MIN=60;
+function getSession(){try{const x=JSON.parse(localStorage.getItem(SESS));return x&&x.pid?x:null}catch(e){return null}}
+function startSession(){try{localStorage.setItem(SESS,JSON.stringify({pid:state.pid,at:Date.now()}))}catch(e){}}
+function endSession(){try{localStorage.removeItem(SESS)}catch(e){}}
+function sessionLeft(){const x=getSession();return x&&x.pid===state.pid?Math.max(0,x.at+SESSION_MIN*60000-Date.now()):0}
+function resumeSession(){const x=getSession();if(!x||Date.now()-x.at>SESSION_MIN*60000){endSession();return false}const s=loadProfile(x.pid);if(!s||!s.student.name){endSession();return false}
+  state=s;migrateAtt();resetRuntime();applyToday();renderAll();renderBrowser();return true}
+function showGate(){if(teacherOn){$('#gate').hidden=true;return}const g=$('#gate');g.hidden=false;document.body.classList.add('gated');
+  $('#gCls').innerHTML=CLASSES.map(c=>`<option ${c===(state.student.cls||'')?'selected':''}>${c}</option>`).join('');$('#gName').value='';$('#gCode').value='';$('#gMsg').innerHTML='';delete $('#gName').dataset.rid;
+  if(!g.dataset.bound){g.dataset.bound='1';bindNameSuggest('gName','gSug','gCls');$('#gForm').onsubmit=gateLogin;$('#gTeacher').onclick=()=>openTeacher()}
+  setTimeout(()=>{try{$('#gName').focus()}catch(e){}},60)}
+function hideGate(){$('#gate').hidden=true;document.body.classList.remove('gated')}
+function gateLogin(ev){ev.preventDefault();const inp=$('#gName');const n=inp.value.replace(/\s+/g,' ').trim(),cls=$('#gCls').value,msg=$('#gMsg');
+  if(normName(n).split(' ').filter(Boolean).length<2){msg.innerHTML='<div class="feedback bad">اكتبي اسمكِ (الاسم الأول واسم العائلة على الأقل) أو اختاريه من القائمة.</div>';inp.focus();return}
+  const code=$('#gCode').value.trim();let pl=null;if(code){pl=decodePlan(code);if(!pl){const ac=decodeAction(code);msg.innerHTML='<div class="feedback bad">'+(ac?'هذا رمز من رموز المعلمة وليس رمز درس؛ اتركي الخانة فارغة أو اكتبي رمز الدرس.':'رمز الدرس غير صحيح؛ تأكدي منه أو اتركيه فارغاً.')+'</div>';return}}
+  const rid=inp.dataset.rid&&inp.dataset.pick===n?inp.dataset.rid:'';
+  const ix=loadIdx();const hit=ix.list.find(x=>{if(rid){const s=loadProfile(x.id);if(s&&s.student.rid===rid)return true}return normName(x.name)===normName(n)&&secOf(x.cls)===secOf(cls)});
+  flush();
+  if(hit){const s=loadProfile(hit.id);if(s){state=s;if(rid)state.student.rid=rid}}
+  else{state=freshState();state.student.name=n;state.student.cls=cls;state.student.rid=rid;state.pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    ix.list.push({id:state.pid,name:n,cls,av:state.student.av,last:Date.now()});saveIdx(ix);try{localStorage.removeItem(KEY+':draft')}catch(e){}}
+  if(pl)setDevCode(pl);
+  migrateAtt();resetRuntime();applyToday();flush();startSession();hideGate();renderAll();renderBrowser();scheduleSync();
+  toast((hit?'أهلاً بعودتكِ يا ':'أهلاً بكِ يا ')+esc(n.split(' ')[0])+'! 🌸'+(pl?' فُتح الدرس '+ar(pl.today||pl.open[0])+'.':''),4000)}
+// one-hour automatic sign-out (checked every 20 s and when the tab comes back)
+async function sessionTick(){if(teacherOn||!state.pid||$('#gate').hidden===false)return;const x=getSession();if(!x){return}
+  const left=x.at+SESSION_MIN*60000-Date.now();const hc=$('#hTime');if(hc)hc.textContent=left>0?'⏳ '+ar(Math.ceil(left/60000))+' د':'';
+  if(left>0)return;const name=state.student.name.split(' ')[0];flush();try{await Promise.race([pushResult(),new Promise(r=>setTimeout(r,4000))])}catch(e){}
+  try{if(typeof extWin!=='undefined'&&extWin&&!extWin.closed)extWin.close()}catch(e){}
+  endSession();state=freshState();try{localStorage.removeItem(KEY+':draft')}catch(e){}resetRuntime();applyToday();renderAll();renderBrowser();closeModal();showGate();
+  $('#gMsg').innerHTML='<div class="info">⏰ انتهت مدة الجلسة (ساعة) يا '+esc(name)+'، وحُفظ عملكِ. ادخلي مرة أخرى لتكملي.</div>'}
+setInterval(sessionTick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sessionTick()});
 
 /* ---------- layout: task + VS Code side by side, preview in its own window ---------- */
 const twoPane=()=>document.body.classList.contains('twopane')&&innerWidth>880;
@@ -2562,7 +2624,7 @@ function loadPub(){if(!pubP)pubP=(async()=>{try{const [db]=await caps();if(!db)r
 async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل المنصة غير متاح في هذا العرض.');return false}
   try{await db.doc('results/roster').set(JSON.parse(JSON.stringify(rosterData)));try{await db.doc(pubPath()).set(buildPub());pubP=null}catch(e){console.warn('pub',e);toast('حُفظ الكشف، لكن تعذّر نشر قائمة الأسماء للطالبات ('+esc(e&&e.code||'خطأ')+').',6000)}if(msg)toast(msg);return true}catch(e){toast('لم يُحفظ الكشف ('+esc(e&&e.code||'خطأ')+').');return false}}
 
-function bindNameSuggest(){const inp=$('#stName'),box=$('#stSug'),sel=$('#stCls');if(!inp||!box)return;let items=[],act=-1,data=null;
+function bindNameSuggest(iid,bid,sid){const inp=$('#'+(iid||'stName')),box=$('#'+(bid||'stSug')),sel=$('#'+(sid||'stCls'));if(!inp||!box)return;let items=[],act=-1,data=null;
   loadPub().then(d=>{data=d;if(d&&d.c&&Object.keys(d.c).length)inp.placeholder='اكتبي أول حرفين من اسمكِ ثم اختاريه من القائمة'});
   const hide=()=>{box.hidden=true;inp.setAttribute('aria-expanded','false');act=-1};
   const pick=i=>{const it=items[i];if(!it)return;inp.value=it.n;inp.dataset.rid=it.id;inp.dataset.pick=it.n;if(it.c!==sel.value&&[...sel.options].some(o=>o.value===it.c))sel.value=it.c;hide();toast('مرحباً '+esc(it.n.split(' ')[0])+'! 🌸')};
@@ -2704,7 +2766,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='60136f8a79';
+const BUILD_ID='253f4a6f20';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
@@ -2713,7 +2775,7 @@ if(innerWidth<=700)state.side=null;
 migrateAtt();applyToday();
 renderAll();renderBrowser();
 renderSound();renderXP();setTimeout(checkBadges,1200);
-if(loadIdx().list.length)openChooser();
+if(!resumeSession())showGate();
 else if(T.some(t=>(state.att[t.id]||{}).status==='run'&&!state.done[t.id]))toast('استُؤنف المؤقت من حيث توقف.');
 window.addEventListener('resize',()=>{if(!sug.hidden)placeSuggest()});
 })();
