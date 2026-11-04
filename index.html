@@ -551,6 +551,7 @@ body.gated{overflow:hidden}
 .gbtn{font-size:16px;padding:11px 18px;justify-content:center}.gnote{color:var(--muted);font-size:12px}
 .tcard{background:linear-gradient(180deg,var(--surface),var(--surface-2))}.tcard p{margin:0;color:var(--muted);font-size:14px;flex:1}
 .htime{font-style:normal;margin-inline-start:6px;color:var(--teal);font-weight:700}
+.raddcls{margin-top:12px;border:1px solid var(--teal);background:var(--teal-soft);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.raddcls label{display:flex;flex-direction:column;gap:4px;font-weight:600;flex:1;min-width:220px}.raddcls input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1601,9 +1602,12 @@ function modal(html){$('#mbox').innerHTML=html;$('#modal').hidden=false}
 function closeModal(){if(document.fullscreenElement){try{document.exitFullscreen()}catch(e){}}$('#modal').hidden=true;$('#mbox').classList.remove('wide')}
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.closest('[data-close-modal]'))closeModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal()});
+let extraCls=[];
+function allClasses(){const base=CLASSES.filter(c=>!/خارج/.test(c));let rk=[];try{rk=[...((rosterData&&rosterData.extra)||[]),...Object.keys((rosterData&&rosterData.classes)||{})]}catch(e){}const ex=[...new Set([...extraCls,...rk])].filter(c=>c&&!CLASSES.includes(c));return [...base,...ex,...CLASSES.filter(c=>/خارج/.test(c))]}
+const clsKey=c=>{const n=secOf(c);return typeof n==='number'?'n'+n:'t'+normName(c)};
 const CLASSES=['الصف العاشر / ١','الصف العاشر / ٢','الصف العاشر / ٣','الصف العاشر / ٤','الصف العاشر / ٥','الصف العاشر / ٦','طالبة من خارج المدرسة'];
 function openStudent(after){modal(`<h2>بيانات الطالبة</h2><p style="color:var(--muted);margin:0">يظهر الاسم في بطاقة النتيجة. يُحفظ عملك على هذا الجهاز باسمك، وتختارينه في الحصة القادمة لتكملي من حيث توقفتِ.</p>
-  <label>الصف والشعبة<select id="stCls">${CLASSES.map(c=>`<option ${c===state.student.cls?'selected':''}>${c}</option>`).join('')}</select></label>
+  <label>الصف والشعبة<select id="stCls">${allClasses().map(c=>`<option ${c===state.student.cls?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
   <label class="namefield">اسمكِ<input id="stName" value="${escA(state.student.name)}" placeholder="اكتبي أول حرفين من اسمكِ ثم اختاريه" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="stSug"><div class="sugbox" id="stSug" role="listbox" hidden></div></label>
   <div style="margin-top:10px;font-size:13px">اختاري صورتك الرمزية</div><div class="avs" id="avs">${AVATARS.map(a=>`<button type="button" class="avb ${a===avatarOf()?'on':''}" data-av="${a}" aria-label="صورة رمزية ${a}">${a}</button>`).join('')}</div>
   <label>المدرسة<input id="stSchool" value="${escA(state.student.school||SCHOOL)}"></label>
@@ -1642,7 +1646,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'bafaeb7b1764',hash:'9b1fb19a83c8c06d8370bb28c1559ac811e894015d8d1582f2adb8cdf38b5990'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'a8e502cfb978',hash:'242aeab89d5a691bd13006bce13e1cbc919e8e87934632352312acf928947435'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1777,7 +1781,7 @@ function drawSettings(b){const f=+cfg.timeFactor||1;
   const pc=planCls,cur=(cfg.plan||[]).find(x=>x.cls===pc)||(pc!=='*'?null:null),eff=cur||(cfg.plan||[]).find(x=>x.cls==='*')||{open:[1,2,3,4,5],today:null};const op=Array.isArray(eff.open)?eff.open:[1,2,3,4,5];
   b.innerHTML=`<div style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
    <section id="planBox"><h3 style="margin:0 0 4px;font-size:16px">دروس اليوم</h3><p style="margin:0;color:var(--muted);font-size:12.5px">اختاري الدروس المفتوحة للطالبات والدرس المطلوب اليوم. يمكنك وضع خطة لكل صف، والصفوف التي ليس لها خطة تتبع «جميع الصفوف». ينتقل المختبر بالطالبات تلقائياً إلى درس اليوم.</p>
-    <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف <select id="planCls"><option value="*" ${pc==='*'?'selected':''}>جميع الصفوف</option>${CLASSES.map(c=>`<option ${c===pc?'selected':''}>${esc(c)}</option>`).join('')}</select></label>${pc!=='*'&&!cur?'<span style="color:var(--muted);font-size:12.5px">يتبع حالياً خطة «جميع الصفوف»</span>':''}</div>
+    <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف <select id="planCls"><option value="*" ${pc==='*'?'selected':''}>جميع الصفوف</option>${allClasses().map(c=>`<option ${c===pc?'selected':''}>${esc(c)}</option>`).join('')}</select></label>${pc!=='*'&&!cur?'<span style="color:var(--muted);font-size:12.5px">يتبع حالياً خطة «جميع الصفوف»</span>':''}</div>
     <div style="margin-top:8px;font-size:13px;font-weight:600">الدروس المفتوحة</div><div class="planrow">${LESSONS.filter(l=>l.n<=5).map(l=>`<label><input type="checkbox" data-po="${l.n}" ${op.includes(l.n)?'checked':''}> الدرس ${ar(l.n)}</label>`).join('')}</div>
     <div style="margin-top:8px;font-size:13px;font-weight:600">الدرس المطلوب اليوم</div><div class="planrow"><label><input type="radio" name="ptoday" value="" ${!eff.today?'checked':''}> بدون تحديد</label>${LESSONS.filter(l=>l.n<=5).map(l=>`<label><input type="radio" name="ptoday" value="${l.n}" ${eff.today===l.n?'checked':''}> الدرس ${ar(l.n)}</label>`).join('')}</div>
     <div id="rangeBox"></div>
@@ -2207,7 +2211,8 @@ function sessionLeft(){const x=getSession();return x&&x.pid===state.pid?Math.max
 function resumeSession(){const x=getSession();if(!x||Date.now()-x.at>SESSION_MIN*60000){endSession();return false}const s=loadProfile(x.pid);if(!s||!s.student.name){endSession();return false}
   state=s;migrateAtt();resetRuntime();applyToday();renderAll();renderBrowser();return true}
 function showGate(){if(teacherOn){$('#gate').hidden=true;return}const g=$('#gate');g.hidden=false;document.body.classList.add('gated');
-  $('#gCls').innerHTML=CLASSES.map(c=>`<option ${c===(state.student.cls||'')?'selected':''}>${c}</option>`).join('');$('#gName').value='';$('#gCode').value='';$('#gMsg').innerHTML='';delete $('#gName').dataset.rid;
+  $('#gCls').innerHTML=allClasses().map(c=>`<option ${c===(state.student.cls||'')?'selected':''}>${c}</option>`).join('');$('#gName').value='';$('#gCode').value='';$('#gMsg').innerHTML='';delete $('#gName').dataset.rid;
+  loadPub().then(d=>{if(d&&Array.isArray(d.cl)&&d.cl.length){extraCls=d.cl;const sel=$('#gCls'),v=sel.value;sel.innerHTML=allClasses().map(c=>`<option ${c===v?'selected':''}>${esc(c)}</option>`).join('')}});
   if(!g.dataset.bound){g.dataset.bound='1';bindNameSuggest('gName','gSug','gCls');$('#gForm').onsubmit=gateLogin;$('#gTeacher').onclick=()=>openTeacher()}
   setTimeout(()=>{try{$('#gName').focus()}catch(e){}},60)}
 function hideGate(){$('#gate').hidden=true;document.body.classList.remove('gated')}
@@ -2215,7 +2220,7 @@ function gateLogin(ev){ev.preventDefault();const inp=$('#gName');const n=inp.val
   if(normName(n).split(' ').filter(Boolean).length<2){msg.innerHTML='<div class="feedback bad">اكتبي اسمكِ (الاسم الأول واسم العائلة على الأقل) أو اختاريه من القائمة.</div>';inp.focus();return}
   const code=$('#gCode').value.trim();let pl=null;if(code){pl=decodePlan(code);if(!pl){const ac=decodeAction(code);msg.innerHTML='<div class="feedback bad">'+(ac?'هذا رمز من رموز المعلمة وليس رمز درس؛ اتركي الخانة فارغة أو اكتبي رمز الدرس.':'رمز الدرس غير صحيح؛ تأكدي منه أو اتركيه فارغاً.')+'</div>';return}}
   const rid=inp.dataset.rid&&inp.dataset.pick===n?inp.dataset.rid:'';
-  const ix=loadIdx();const hit=ix.list.find(x=>{if(rid){const s=loadProfile(x.id);if(s&&s.student.rid===rid)return true}return normName(x.name)===normName(n)&&secOf(x.cls)===secOf(cls)});
+  const ix=loadIdx();const hit=ix.list.find(x=>{if(rid){const s=loadProfile(x.id);if(s&&s.student.rid===rid)return true}return normName(x.name)===normName(n)&&clsKey(x.cls)===clsKey(cls)});
   flush();
   if(hit){const s=loadProfile(hit.id);if(s){state=s;if(rid)state.student.rid=rid}}
   else{state=freshState();state.student.name=n;state.student.cls=cls;state.student.rid=rid;state.pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -2599,10 +2604,10 @@ function secOf(s){s=toLatin(s);if(/خارج/.test(s))return 'out';const m=s.matc
 function normName(s){return String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي')
   .replace(/[^؀-ۿa-zA-Z\s]/g,' ').split(/\s+/).filter(w=>w&&!['بنت','بن','ابن'].includes(w)).join(' ')}
 function rosterList(){const out=[];Object.entries(rosterData.classes||{}).forEach(([c,arr])=>(arr||[]).forEach(x=>out.push(Object.assign({cls:c},x))));return out}
-function rosterClasses(){return Object.keys(rosterData.classes||{}).filter(c=>(rosterData.classes[c]||[]).length).sort((a,b)=>(secOf(a)||99)-(secOf(b)||99))}
+function rosterClasses(){const ex=rosterData.extra||[];return Object.keys(rosterData.classes||{}).filter(c=>(rosterData.classes[c]||[]).length||ex.includes(c)).sort((a,b)=>{const x=secOf(a),y=secOf(b);return (typeof x==='number'?x:99)-(typeof y==='number'?y:99)||a.localeCompare(b,'ar')})}
 /* which roster student does a result belong to? */
 function matchRoster(r){if(r.rid){const h=rosterList().find(x=>x.id===r.rid);if(h)return {hit:h}}const lk=(rosterData.links||{})[rkey(r)];if(lk){const hit=rosterList().find(x=>x.id===lk);if(hit)return {hit}}
-  const sec=secOf(r.cls);const pool=rosterList().filter(x=>secOf(x.cls)===sec);if(!pool.length)return {hit:null,cands:[]};
+  const sec=clsKey(r.cls);const pool=rosterList().filter(x=>clsKey(x.cls)===sec);if(!pool.length)return {hit:null,cands:[]};
   const t=normName(r.name).split(' ');if(!t[0])return {hit:null,cands:[]};
   const full=pool.filter(x=>normName(x.n)===t.join(' '));if(full.length===1)return {hit:full[0]};
   let c=pool.filter(x=>{const w=normName(x.n).split(' ');if(w[0]!==t[0])return false;if(t.length===1)return true;const last=t[t.length-1];if(w[w.length-1]!==last)return false;return t.slice(1,-1).every(m=>w.includes(m))});
@@ -2618,7 +2623,7 @@ function shortNames(list){const W=n=>String(n).replace(/\s+/g,' ').trim().split(
   const mk=(w,k)=>{if(w.length<=2)return w.join(' ');let last=w[w.length-1];const pre=w[w.length-2];if(['بيت','آل','ال','ابو','أبو','بو','عبد'].includes(pre))last=pre+' '+last;return k?w.slice(0,1+k).join(' ')+' '+last:w[0]+' '+last};
   const out=list.map(x=>({id:x.id,w:W(x.n),k:0}));for(let pass=0;pass<4;pass++){const seen={};out.forEach(o=>{const s=mk(o.w,o.k);(seen[s]=seen[s]||[]).push(o)});let again=false;Object.values(seen).forEach(g=>{if(g.length>1){g.forEach(o=>{if(o.k<o.w.length-2){o.k++;again=true}})}});if(!again)break}
   return out.map(o=>({i:o.id,n:mk(o.w,o.k)}))}
-function buildPub(){const c={};Object.entries(rosterData.classes||{}).forEach(([k,l])=>{if((l||[]).length)c[k]=shortNames(l)});return {at:new Date().toISOString(),c}}
+function buildPub(){const c={};Object.entries(rosterData.classes||{}).forEach(([k,l])=>{if((l||[]).length)c[k]=shortNames(l)});return {at:new Date().toISOString(),c,cl:allClasses().filter(x=>!/خارج/.test(x)&&!CLASSES.includes(x))}}
 let pubP=null;
 function loadPub(){if(!pubP)pubP=(async()=>{try{const [db]=await caps();if(!db)return null;const s=await db.doc(pubPath()).get();return s.exists?s.data():null}catch(e){return null}})().then(d=>{if(!d)setTimeout(()=>{pubP=null},1000);return d});return pubP}
 async function saveRoster(msg){const [db]=await caps();if(!db){toast('سجل المنصة غير متاح في هذا العرض.');return false}
@@ -2628,7 +2633,7 @@ function bindNameSuggest(iid,bid,sid){const inp=$('#'+(iid||'stName')),box=$('#'
   loadPub().then(d=>{data=d;if(d&&d.c&&Object.keys(d.c).length)inp.placeholder='اكتبي أول حرفين من اسمكِ ثم اختاريه من القائمة'});
   const hide=()=>{box.hidden=true;inp.setAttribute('aria-expanded','false');act=-1};
   const pick=i=>{const it=items[i];if(!it)return;inp.value=it.n;inp.dataset.rid=it.id;inp.dataset.pick=it.n;if(it.c!==sel.value&&[...sel.options].some(o=>o.value===it.c))sel.value=it.c;hide();toast('مرحباً '+esc(it.n.split(' ')[0])+'! 🌸')};
-  const draw=()=>{const q=normName(inp.value).trim();if(q.length<2){hide();return}if(!data||!data.c||!Object.keys(data.c).length){box.innerHTML='<div class="sugnone">لا توجد قائمة أسماء لصفكِ بعد؛ اكتبي اسمكِ الثلاثي كاملاً.</div>';box.hidden=false;return}
+  const draw=()=>{const q=normName(inp.value).trim();if(q.length<2){hide();return}if((!data||!data.c)&&!inp.dataset.loading){inp.dataset.loading='1';loadPub().then(d=>{delete inp.dataset.loading;if(d&&d.c){data=d;draw()}})}if(!data||!data.c||!Object.keys(data.c).length){box.innerHTML='<div class="sugnone">لا توجد قائمة أسماء لصفكِ بعد؛ اكتبي اسمكِ الثلاثي كاملاً.</div>';box.hidden=false;return}
     const match=n=>{const w=normName(n).split(' ');return w.some(x=>x.startsWith(q))||normName(n).startsWith(q)};
     const mine=(data.c[sel.value]||[]).filter(x=>match(x.n)).map(x=>({id:x.i,n:x.n,c:sel.value}));
     const other=mine.length?[]:Object.entries(data.c).filter(([c])=>c!==sel.value).flatMap(([c,l])=>l.filter(x=>match(x.n)).map(x=>({id:x.i,n:x.n,c})));
@@ -2639,6 +2644,14 @@ function bindNameSuggest(iid,bid,sid){const inp=$('#'+(iid||'stName')),box=$('#'
   inp.addEventListener('keydown',e=>{if(box.hidden||!items.length)return;if(e.key==='ArrowDown'){act=Math.min(act+1,items.length-1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){act=Math.max(act-1,0);draw();e.preventDefault()}else if(e.key==='Enter'&&act>=0){pick(act);e.preventDefault()}else if(e.key==='Escape'){hide();e.stopPropagation()}});
   box.addEventListener('mousedown',e=>{const b=e.target.closest('[data-i]');if(b){e.preventDefault();pick(+b.dataset.i)}});
   inp.addEventListener('blur',()=>setTimeout(hide,150))}
+
+
+function openAddClass(){const box=document.createElement('form');box.className='raddcls';box.innerHTML=`<label>اسم الصف الجديد<input id="ncName" placeholder="مثال: الصف العاشر / ٧ أو عاشر — مجموعة الإثراء" maxlength="40"></label><div class="actions" style="margin:0"><button class="btn primary" type="submit">حفظ الصف</button><button class="btn" type="button" id="ncCancel">إلغاء</button></div><div id="ncMsg"></div>`;
+  const host=$('#dashBody');const old=host.querySelector('.raddcls');if(old)old.remove();host.prepend(box);$('#ncName').focus();$('#ncCancel').onclick=()=>box.remove();
+  box.onsubmit=async ev=>{ev.preventDefault();let n=$('#ncName').value.replace(/\s+/g,' ').trim();if(/^[0-9٠-٩]{1,2}$/.test(n))n=clsLabel(+toLatin(n));if(n.length<2){$('#ncMsg').innerHTML='<div class="feedback bad">اكتبي اسماً للصف.</div>';return}
+    if(allClasses().some(c=>clsKey(c)===clsKey(n))||Object.keys(rosterData.classes||{}).some(c=>clsKey(c)===clsKey(n))){$('#ncMsg').innerHTML='<div class="feedback bad">يوجد صف بهذا الاسم.</div>';return}
+    rosterData.classes=rosterData.classes||{};rosterData.classes[n]=[];rosterData.extra=[...new Set([...(rosterData.extra||[]),n])];
+    if(await saveRoster('أُضيف «'+n+'». أضيفي طالباته باستيراد الكشف أو من خانة «إضافة طالبة».')){rosterCls=n;rosterMode='view';drawTeacher()}}}
 
 /* ---------- parsing pasted text / CSV / Excel ---------- */
 function parseRosterRows(rows,fallbackCls){rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(Boolean));if(!rows.length)return [];
@@ -2669,23 +2682,23 @@ function pctOf(r){return r&&r.max?Math.round(r.points/r.max*100):0}
 function levelOf20(r){const p=pctOf(r);return !r?'—':p>=90?'متقنة بامتياز':p>=75?'متقنة':p>=50?'في طور الإتقان':'تحتاج إلى متابعة'}
 function agoTxt(iso){if(!iso)return '—';const d=Math.round((Date.now()-new Date(iso))/60000);return d<1?'الآن':d<60?'قبل '+ar(d)+' د':d<1440?'قبل '+ar(Math.round(d/60))+' س':new Date(iso).toLocaleDateString('ar-OM',{day:'numeric',month:'short'})}
 function drawRoster(b){if(rosterMode==='import'){drawRosterImport(b);return}
-  const cls=rosterClasses();if(!cls.length){b.innerHTML=`<div class="rosterempty"><h3>لم تُستورد كشوف الصفوف بعد</h3><p>استوردي كشف أسماء طالبات الصف العاشر مرة واحدة من ملف Excel أو بالنسخ واللصق، فتظهر لكِ كل طالبة باسمها الكامل وحالتها ونتيجتها وتقرير أدائها، حتى من لم تبدأ بعد.</p><button class="btn primary" type="button" id="rImp">📥 استيراد كشوف الصفوف</button></div>`;$('#rImp').onclick=()=>{rosterMode='import';drawTeacher()};return}
+  const cls=rosterClasses();if(!cls.length){b.innerHTML=`<div class="rosterempty"><button class="btn" type="button" id="rAddCls" style="float:inline-start">➕ إضافة صف</button><h3>لم تُستورد كشوف الصفوف بعد</h3><p>استوردي كشف أسماء طالبات الصف العاشر مرة واحدة من ملف Excel أو بالنسخ واللصق، فتظهر لكِ كل طالبة باسمها الكامل وحالتها ونتيجتها وتقرير أدائها، حتى من لم تبدأ بعد.</p><button class="btn primary" type="button" id="rImp">📥 استيراد كشوف الصفوف</button></div>`;$('#rImp').onclick=()=>{rosterMode='import';drawTeacher()};$('#rAddCls').onclick=openAddClass;return}
   if(!cls.includes(rosterCls))rosterCls=cls[0];const {res,unmatched}=rosterJoin();
   const sum=cls.map(c=>{const l=rosterData.classes[c];const st=l.filter(x=>res[x.id]).length;return {c,n:l.length,st}});
-  const list=(rosterData.classes[rosterCls]||[]).slice();const um=unmatched.filter(u=>secOf(u.r.cls)===secOf(rosterCls));
+  const list=(rosterData.classes[rosterCls]||[]).slice();const um=unmatched.filter(u=>clsKey(u.r.cls)===clsKey(rosterCls));
   b.innerHTML=`<div class="rsum">${sum.map(s=>`<button type="button" class="rcls ${s.c===rosterCls?'on':''}" data-rc="${escA(s.c)}"><b>${esc(s.c.replace('الصف ',''))}</b><small>${ar(s.st)} من ${ar(s.n)} بدأن</small><span class="rbar"><i style="width:${s.n?Math.round(s.st/s.n*100):0}%"></i></span></button>`).join('')}</div>
-  <div class="actions"><button class="btn" type="button" id="rImp">📥 استيراد / تحديث الكشوف</button><button class="btn warn" type="button" id="rDelCls">🗑️ حذف كشف ${esc(rosterCls.replace('الصف ',''))}</button><button class="btn" type="button" id="rCsv">⬇️ تنزيل نتائج الصف (Excel)</button><button class="btn primary" type="button" id="rPrintAll">🖨️ تقارير الصف كاملة</button></div>
+  <div class="actions"><button class="btn" type="button" id="rImp">📥 استيراد / تحديث الكشوف</button><button class="btn" type="button" id="rAddCls">➕ إضافة صف</button><button class="btn warn" type="button" id="rDelCls">🗑️ حذف ${esc(rosterCls.replace('الصف ',''))}</button><button class="btn" type="button" id="rCsv">⬇️ تنزيل نتائج الصف (Excel)</button><button class="btn primary" type="button" id="rPrintAll">🖨️ تقارير الصف كاملة</button></div>
   ${um.length?`<div class="rwarn"><b>⚠️ ${ar(um.length)} نتيجة لم تُطابق اسماً في كشف ${esc(rosterCls)}</b><small>كتبت الطالبة اسمها بطريقة مختلفة. اختاري اسمها من الكشف ليُحفظ الربط.</small>${um.map(u=>`<div class="rlink"><span>${esc(u.r.name)} <small>(${ar(u.r.points)} نقطة)</small></span><select data-lk="${escA(rkey(u.r))}"><option value="">— اختاري اسمها —</option>${(u.cands.length?u.cands:list).map(x=>`<option value="${escA(x.id)}">${esc(x.n)}</option>`).join('')}</select></div>`).join('')}</div>`:''}
   <div class="dashwrap"><table class="dash rtab"><thead><tr><th class="n">#</th><th>الطالبة</th><th>الحالة</th><th class="n">النقاط</th><th class="n">الدرجة /٢٠</th><th class="n">المهام</th><th>آخر نشاط</th><th></th></tr></thead><tbody>
   ${list.map((x,i)=>{const r=res[x.id];const [st,sc]=statusOf(r);return `<tr><td class="n">${ar(i+1)}</td><td><b>${esc(x.n)}</b>${r&&normName(r.name)!==normName(x.n)?`<br><small style="color:var(--muted)">كتبت: ${esc(r.name)}</small>`:''}</td><td><span class="stchip ${sc}">${st}</span></td><td class="n">${r?ar(r.points)+' / '+ar(r.max):'—'}</td><td class="n">${r?ar(r.grade20):'—'}</td><td class="n">${r?ar(r.tasksDone)+' / '+ar(r.tasks):'—'}</td><td>${r?agoTxt(r.sentAt):'—'}</td><td class="racts"><button class="btn" type="button" data-rep="${escA(x.id)}">📄 التقرير</button><button class="btn icon" type="button" data-rdel="${escA(x.id)}" title="حذف ${escA(x.n)} من الكشف" aria-label="حذف ${escA(x.n)} من الكشف">🗑️</button></td></tr>`}).join('')}</tbody></table></div>
   <form class="radd" id="rAdd"><input id="rAddN" placeholder="إضافة طالبة إلى ${escA(rosterCls)}: اكتبي اسمها الكامل" aria-label="اسم الطالبة الجديدة"><button class="btn" type="submit">➕ إضافة</button></form>
   <small style="color:var(--muted)">الحذف من الكشف لا يحذف عمل الطالبة ولا نتيجتها؛ تبقى نتيجتها في «جدول النتائج».</small>`;
   b.querySelectorAll('[data-rc]').forEach(x=>x.onclick=()=>{rosterCls=x.dataset.rc;drawTeacher()});
-  $('#rImp').onclick=()=>{rosterMode='import';drawTeacher()};
+  $('#rImp').onclick=()=>{rosterMode='import';drawTeacher()};$('#rAddCls').onclick=openAddClass;
   b.querySelectorAll('[data-rep]').forEach(x=>x.onclick=()=>openReport([x.dataset.rep]));
   const forget=ids=>{const L=rosterData.links||{};Object.keys(L).forEach(k=>{if(ids.includes(L[k]))delete L[k]});ids.forEach(i=>{if(rosterData.notes)delete rosterData.notes[i]})};
   const twoStep=(btn,label,act)=>{if(btn.dataset.armed){act();return}btn.dataset.armed='1';const old=btn.innerHTML;btn.innerHTML=label;btn.classList.add('danger');setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.innerHTML=old;btn.classList.remove('danger')}},4000)};
-  $('#rDelCls').onclick=ev=>twoStep(ev.currentTarget,'⚠️ اضغطي مرة أخرى لحذف كشف '+esc(rosterCls.replace('الصف ',''))+' كاملاً',async()=>{const ids=(rosterData.classes[rosterCls]||[]).map(x=>x.id);forget(ids);delete rosterData.classes[rosterCls];if(await saveRoster('حُذف كشف '+rosterCls+'.')){rosterCls='';drawTeacher()}});
+  $('#rDelCls').onclick=ev=>twoStep(ev.currentTarget,'⚠️ اضغطي مرة أخرى لحذف كشف '+esc(rosterCls.replace('الصف ',''))+' كاملاً',async()=>{const ids=(rosterData.classes[rosterCls]||[]).map(x=>x.id);forget(ids);delete rosterData.classes[rosterCls];rosterData.extra=(rosterData.extra||[]).filter(x=>x!==rosterCls);if(await saveRoster('حُذف كشف '+rosterCls+'.')){rosterCls='';drawTeacher()}});
   b.querySelectorAll('[data-rdel]').forEach(x=>x.onclick=()=>twoStep(x,'تأكيد الحذف',async()=>{const id=x.dataset.rdel;const l=rosterData.classes[rosterCls]||[];const st=l.find(y=>y.id===id);rosterData.classes[rosterCls]=l.filter(y=>y.id!==id);forget([id]);if(await saveRoster('حُذفت '+(st?st.n:'الطالبة')+' من الكشف.'))drawTeacher()}));
   $('#rAdd').onsubmit=async ev=>{ev.preventDefault();const n=$('#rAddN').value.replace(/\s+/g,' ').trim();if(normName(n).split(' ').length<2){toast('اكتبي اسم الطالبة كاملاً (كلمتان على الأقل).');return}const l=rosterData.classes[rosterCls]=rosterData.classes[rosterCls]||[];if(l.some(y=>normName(y.n)===normName(n))){toast('هذه الطالبة موجودة في الكشف.');return}
     l.push({id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),n});if(await saveRoster('أُضيفت '+n+'.'))drawTeacher()};
@@ -2695,7 +2708,7 @@ function drawRoster(b){if(rosterMode==='import'){drawRosterImport(b);return}
 function drawRosterImport(b){const d=rosterDraft;
   b.innerHTML=`<div class="rimp"><h3 style="margin:12px 0 4px;font-size:16px">استيراد كشوف الصف العاشر</h3>
   <p style="margin:0;color:var(--muted);font-size:12.5px">ارفعي ملف Excel أو CSV فيه أسماء الطالبات (يمكن أن يكون كل صف في ورقة مستقلة، أو عمود للاسم وعمود للصف مثل «10/2»)، أو انسخي الأسماء من Excel والصقيها هنا. تُقرأ من الملفات <b>أسماء الطالبات والصف فقط</b>، وتُتجاهل الدرجات وأي بيانات أخرى فيها؛ والملف نفسه لا يُرفع إلى أي مكان.</p>
-  <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف الافتراضي <select id="riCls">${CLASSES.filter(c=>!/خارج/.test(c)).map(c=>`<option ${c===rosterCls?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="btn" style="cursor:pointer">📂 اختيار ملفات Excel (يمكن اختيار كل الصفوف معاً)<input type="file" id="riFile" accept=".xlsx,.xls,.csv,.txt" multiple hidden></label></div>
+  <div class="actions"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;margin:0">الصف الافتراضي <select id="riCls">${allClasses().filter(c=>!/خارج/.test(c)).map(c=>`<option ${c===rosterCls?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="btn" style="cursor:pointer">📂 اختيار ملفات Excel (يمكن اختيار كل الصفوف معاً)<input type="file" id="riFile" accept=".xlsx,.xls,.csv,.txt" multiple hidden></label></div>
   <small style="color:var(--muted)">«الصف الافتراضي» يُستخدم للأسماء التي لا يُذكر صفها في الملف أو اللصق.</small>
   <textarea id="riTxt" class="copybox" style="min-height:140px;margin-top:8px" placeholder="مثال:&#10;ريم سالم محمد الحارثية&#9;10/1&#10;شهد خالد علي البلوشية&#9;10/1&#10;أو اسم في كل سطر للصف الافتراضي"></textarea>
   <div class="actions"><button class="btn" type="button" id="riPrev">معاينة</button><button class="btn" type="button" id="riBack">رجوع</button></div>
@@ -2766,7 +2779,7 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
 
-const BUILD_ID='253f4a6f20';
+const BUILD_ID='ad0a6834cc';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
