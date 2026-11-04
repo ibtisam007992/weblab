@@ -552,6 +552,27 @@ body.gated{overflow:hidden}
 .tcard{background:linear-gradient(180deg,var(--surface),var(--surface-2))}.tcard p{margin:0;color:var(--muted);font-size:14px;flex:1}
 .htime{font-style:normal;margin-inline-start:6px;color:var(--teal);font-weight:700}
 .raddcls{margin-top:12px;border:1px solid var(--teal);background:var(--teal-soft);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.raddcls label{display:flex;flex-direction:column;gap:4px;font-weight:600;flex:1;min-width:220px}.raddcls input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+
+.achtools{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.achrep{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:10px;background:var(--surface)}
+.achrep h3{font-size:15px;margin:16px 0 6px;color:var(--teal)}.achrep ul,.achrep ol{margin:4px 0;padding-inline-start:20px;font-size:13px}
+.achlegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-bottom:6px}.achlegend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:5px;vertical-align:-1px}
+.achrow{display:grid;grid-template-columns:110px 1fr 90px;gap:10px;align-items:center;margin:5px 0;font-size:13px}.achrow small{color:var(--muted)}
+.achbar{display:flex;height:22px;border-radius:7px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.achbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11.5px;font-weight:800;color:#1b2a2d;height:100%}
+.achtab .tot td{font-weight:800;background:var(--surface-2)}
+.achcls{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-top:8px;break-inside:avoid}.achcls h4{margin:0 0 6px;font-size:14px}
+.achcols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}@media (max-width:760px){.achcols{grid-template-columns:1fr 1fr}}
+.achcols b{display:block;border-bottom:3px solid;padding-bottom:3px;font-size:13px}.achcols ul{list-style:none;padding:0;margin:4px 0;font-size:12.5px}.achcols li{padding:2px 0}.achcols small{color:var(--muted)}.achcols li.none{color:var(--muted)}
+@media print{
+  body.printach #mbox > *:not(#dashBody){display:none!important}
+  body.printach #dashBody > *:not(.achrep){display:none!important}
+  body.printach .achrep{border:0;padding:0}
+  body.printach .achh{break-before:page}
+  body.printach .achcls{break-inside:auto}
+  body.printach .achcols>div{break-inside:avoid}
+  body.printach .achbar i,body.printach .achlegend i,body.printach .achcols b{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 /* ---------- motivating look ---------- */
 body{background:radial-gradient(1100px 520px at 105% -10%,var(--glow1),transparent 60%),radial-gradient(900px 520px at -10% 110%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed}
 .brand-mark{background:linear-gradient(135deg,var(--teal),#2fb7c0 55%,var(--accent));box-shadow:0 6px 16px -6px var(--teal)}
@@ -1646,7 +1667,7 @@ function resultEntry(){const atts=T.reduce((s,t)=>s+((state.att[t.id]||{}).n||0)
 function hashKey(str){let h=5381;for(const c of str)h=((h*33)^c.codePointAt(0))>>>0;return 's_'+h.toString(36)}
 let capsP=null;
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
-const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'a8e502cfb978',hash:'242aeab89d5a691bd13006bce13e1cbc919e8e87934632352312acf928947435'}};const subs=[];
+const LDB=(()=>{const P='mlab-tdb:';const FIX={'teacher/pin':{salt:'e675a30adfba',hash:'09ded1745ccf306aa2bd881b6a026d3ba1abb68425bc9f36c63377fadd71bb54'}};const subs=[];
  const rd=p=>{if(FIX[p])return FIX[p];try{const v=localStorage.getItem(P+p);return v?JSON.parse(v):null}catch(e){return null}};
  const wr=(p,d)=>{if(FIX[p])throw {code:'standalone_pin'};try{localStorage.setItem(P+p,JSON.stringify(d))}catch(e){throw {code:'storage'}}subs.forEach(f=>{try{f()}catch(e){}})};
  const snap=p=>{const d=rd(p);return {id:p.split('/').pop(),exists:!!d,data:()=>d?JSON.parse(JSON.stringify(d)):undefined,metadata:{}}};
@@ -1739,7 +1760,7 @@ function pinSetup(db,change){modal(`<h2>${change?'تغيير الرقم السر
 let dashRows=[],dashUnsub=null,dashCls='',tView='board',planCls='*';
 async function openTeacherPanel(){if(!teacherOn){openTeacher();return}const [db]=await caps();if(!db){toast('سجل النتائج غير متاح في هذا العرض.');return}
   modal(`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><div><h2>واجهة المعلمة</h2><p style="color:var(--muted);margin:0">${STANDALONE?(FB?'🔴 مباشر: تصل نتائج الطالبات فوراً بعد كل مهمة. ويمكنكِ أيضاً استيراد رسائل النتائج.':'الصقي رسائل نتائج الطالبات في تبويب «استيراد رسائل النتائج». تُحفظ النتائج في متصفح هذا الجهاز فقط.'):'تصل نتائج الطالبات تلقائياً بعد كل مهمة.'}</p></div><button class="btn" type="button" data-close-modal>إغلاق</button></div>
-  <div class="tabsrow" role="tablist"><button type="button" role="tab" data-tv="board">لوحة المتميزات</button><button type="button" role="tab" data-tv="roster">الطالبات والتقارير</button><button type="button" role="tab" data-tv="table">جدول النتائج</button><button type="button" role="tab" data-tv="analysis">تحليل الصعوبة</button><button type="button" role="tab" data-tv="reflect">التأملات</button><button type="button" role="tab" data-tv="projects">المشاريع</button><button type="button" role="tab" data-tv="import">استيراد رسائل النتائج</button><button type="button" role="tab" data-tv="settings">الإعدادات</button></div><div id="dashBody"><p>جارٍ التحميل…</p></div>`);$('#mbox').classList.add('wide');
+  <div class="tabsrow" role="tablist"><button type="button" role="tab" data-tv="board">لوحة المتميزات</button><button type="button" role="tab" data-tv="achieve">تقرير الإنجاز</button><button type="button" role="tab" data-tv="roster">الطالبات والتقارير</button><button type="button" role="tab" data-tv="table">جدول النتائج</button><button type="button" role="tab" data-tv="analysis">تحليل الصعوبة</button><button type="button" role="tab" data-tv="reflect">التأملات</button><button type="button" role="tab" data-tv="projects">المشاريع</button><button type="button" role="tab" data-tv="import">استيراد رسائل النتائج</button><button type="button" role="tab" data-tv="settings">الإعدادات</button></div><div id="dashBody"><p>جارٍ التحميل…</p></div>`);$('#mbox').classList.add('wide');
   $('#mbox').querySelector('.tabsrow').onclick=ev=>{const b=ev.target.closest('[data-tv]');if(b){tView=b.dataset.tv;drawTeacher()}};
   if(!dashUnsub)dashUnsub=db.collection('results').onSnapshot(snap=>{dashRows=[];rosterData={classes:{},links:{},notes:{}};snap.docs.forEach(d=>{const o=d.data()||{};if(d.id==='rubric'){rubricData=o;return}if(d.id==='roster'){rosterData=Object.assign({classes:{},links:{},notes:{}},o);return}Object.values(o).forEach(e=>{if(e&&typeof e==='object'&&e.name)dashRows.push(e)})});if(tView!=='import'&&tView!=='settings'&&tView!=='projects'&&!(tView==='roster'&&rosterMode==='import')&&!document.querySelector('.rep'))drawTeacher()},err=>{const b=$('#dashBody');if(b)b.innerHTML=`<div class="feedback bad">تعذّر قراءة النتائج (${esc(err&&err.code||'خطأ')}). تظهر النتائج لحساب صاحبة المختبر فقط.</div>`;dashUnsub=null});
   drawTeacher()}
@@ -1750,6 +1771,7 @@ function drawTeacher(){const b=$('#dashBody');if(!b)return;document.querySelecto
   if(tView==='settings'){drawSettings(b);return}
   if(tView==='import'){drawImport(b);return}
   if(tView==='roster'){drawRoster(b);return}
+  if(tView==='achieve'){drawAchieve(b);return}
   const rows=dashRows.filter(r=>!dashCls||r.cls===dashCls);
   if(tView==='analysis'){drawAnalysis(b,rows);return}
   if(tView==='reflect'){drawReflect(b,rows);return}
@@ -2778,8 +2800,54 @@ function openReport(ids){const {res}=rosterJoin();const all=rosterList();const x
   $('#repPrint').onclick=()=>{document.querySelectorAll('[data-note]').forEach(t=>{const p=t.nextElementSibling;if(p)p.textContent=t.value||'................................................................................................'});document.body.classList.add('printrep');setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('printrep'),400)},60)};
   const sv=$('#repSave');if(sv)sv.onclick=async()=>{rosterData.notes=rosterData.notes||{};document.querySelectorAll('[data-note]').forEach(t=>{rosterData.notes[t.dataset.note]=t.value.trim().slice(0,800)});await saveRoster('حُفظت الملاحظة.')}}
 
+/* ================= ACHIEVEMENT REPORT: all grade-10 classes, by level ================= */
+const ACH_LV={hi:['مجيدة','#2fb36b','≥ ٨٠٪'],mid:['متوسطة','#f2c230','٥٠–٧٩٪'],low:['متدنية','#e0533b','أقل من ٥٠٪'],none:['لم تبدأ','#b8c4c6','لا نتيجة بعد']};
+const achLevel=r=>{if(!r)return 'none';const p=pctOf(r);return p>=80?'hi':p>=50?'mid':'low'};
+function achData(){const {res,unmatched}=rosterJoin();const byCls={};
+  rosterClasses().forEach(c=>{byCls[c]=(rosterData.classes[c]||[]).map(x=>({n:x.n,id:x.id,cls:c,r:res[x.id]||null}))});
+  unmatched.forEach(u=>{const c=Object.keys(byCls).find(k=>clsKey(k)===clsKey(u.r.cls))||u.r.cls||'غير محدد';(byCls[c]=byCls[c]||[]).push({n:u.r.name,id:null,cls:c,r:u.r,unl:true})});
+  Object.values(byCls).forEach(l=>l.forEach(s=>s.lv=achLevel(s.r)));return byCls}
+function achBar(cnt,tot){return `<div class="achbar">${['hi','mid','low','none'].map(k=>cnt[k]?`<i style="width:${cnt[k]/tot*100}%;background:${ACH_LV[k][1]}" title="${ACH_LV[k][0]}: ${cnt[k]}">${cnt[k]/tot>=0.08?ar(cnt[k]):''}</i>`:'').join('')}</div>`}
+function drawAchieve(b){const D=achData();const cls=Object.keys(D);const all=cls.flatMap(c=>D[c]);
+  if(!all.length){b.innerHTML='<p style="margin-top:14px">لا توجد طالبات بعد. استوردي كشوف الصفوف من «الطالبات والتقارير» أو انتظري وصول أول النتائج.</p>';return}
+  const cnt=l=>{const o={hi:0,mid:0,low:0,none:0};l.forEach(s=>o[s.lv]++);return o};const C=cnt(all);const st=all.filter(s=>s.r);
+  const avg=l=>{const g=l.filter(s=>s.r);return g.length?Math.round(g.reduce((a,s)=>a+(+s.r.grade20||0),0)/g.length*10)/10:null};
+  const done=l=>{const g=l.filter(s=>s.r);const d=g.reduce((a,s)=>a+(s.r.tasksDone||0),0),t=g.reduce((a,s)=>a+(s.r.tasks||0),0);return t?Math.round(d/t*100):null};
+  const L5=LESSONS.filter(l=>l.n<=5);const lessonPct=L5.map(l=>{let p=0,m=0,n=0;st.forEach(s=>{const e=(s.r.lessons||[]).find(z=>z.n===l.n);if(e&&e.max&&(e.done||e.points)){p+=e.points;m+=e.max;n++}});return {l,n,p:m?Math.round(p/m*100):null}});
+  const core=T.filter(t=>!t.challenge);const hard=core.map(t=>{const k=T.indexOf(t);let s=0,first=0;st.forEach(x=>{const c=(x.r.tstat||'')[k];if(!c||c==='-')return;s++;if(c==='1')first++});return {t,s,diff:s?1-first/s:0}}).filter(x=>x.s>=2).sort((a,c)=>c.diff-a.diff).slice(0,5);
+  const date=new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
+  const names=(l,k)=>l.filter(s=>s.lv===k).sort((a,c)=>(c.r?c.r.grade20:0)-(a.r?a.r.grade20:0)).map(s=>`<li>${esc(s.n)}${s.r?` <small>${ar(s.r.grade20)}/٢٠</small>`:''}${s.unl?' <small title="لم تُطابق اسماً في الكشف">⚠️</small>':''}</li>`).join('')||'<li class="none">—</li>';
+  b.innerHTML=`<div class="achtools noprint"><span style="color:var(--muted);font-size:12.5px">يُحسب من النتائج الحقيقية الواصلة إلى المنصة، ويتحدّث تلقائياً. المستوى من نسبة النقاط في الدروس المفتوحة لكل طالبة: مجيدة ٨٠٪ فأكثر، ومتوسطة ٥٠–٧٩٪، ومتدنية أقل من ٥٠٪.</span>
+    <div class="actions"><button class="btn primary" type="button" id="achPrint">🖨️ طباعة / PDF</button><button class="btn" type="button" id="achCsv">⬇️ تنزيل (Excel)</button><button class="btn" type="button" id="achAll">📄 تقارير كل الطالبات (${ar(all.filter(s=>s.id).length)})</button></div></div>
+  <article class="achrep">
+   <header class="rephead"><div><h2>تقرير إنجاز المهام التطبيقية</h2><small>منصة «صانعات الويب» · تقنية المعلومات · الصف العاشر · وحدة تصميم مواقع الويب</small></div><small>${date}<br>${esc(SCHOOL)} · أ. ابتسام الرواس</small></header>
+   <div class="reptiles"><div><b>${ar(all.length)}</b><small>طالبة في ${ar(cls.length)} صف</small></div><div><b>${ar(st.length)} <small>(${ar(Math.round(st.length/all.length*100))}٪)</small></b><small>بدأن العمل</small></div><div><b>${avg(all)==null?'—':ar(avg(all))}</b><small>متوسط الدرجة من ٢٠</small></div><div><b>${done(all)==null?'—':ar(done(all))+'٪'}</b><small>نسبة إنجاز المهام</small></div>
+    ${['hi','mid','low','none'].map(k=>`<div style="border-color:${ACH_LV[k][1]}"><b style="color:${k==='none'?'var(--muted)':ACH_LV[k][1]}">${ar(C[k])}</b><small>${ACH_LV[k][0]} · ${ACH_LV[k][2]}</small></div>`).join('')}</div>
+   <h3>توزيع المستويات في الصفوف</h3>
+   <div class="achlegend">${['hi','mid','low','none'].map(k=>`<span><i style="background:${ACH_LV[k][1]}"></i>${ACH_LV[k][0]}</span>`).join('')}</div>
+   ${cls.map(c=>{const l=D[c],k=cnt(l);return `<div class="achrow"><b>${esc(c.replace('الصف ',''))}</b>${achBar(k,l.length)}<small>${ar(l.filter(s=>s.r).length)}/${ar(l.length)} بدأن</small></div>`}).join('')}
+   <table class="rtable achtab"><thead><tr><th>الصف</th><th class="n">الطالبات</th><th class="n">مجيدة</th><th class="n">متوسطة</th><th class="n">متدنية</th><th class="n">لم تبدأ</th><th class="n">متوسط /٢٠</th><th class="n">إنجاز المهام</th></tr></thead><tbody>
+   ${cls.map(c=>{const l=D[c],k=cnt(l),a=avg(l),d=done(l);return `<tr><td>${esc(c)}</td><td class="n">${ar(l.length)}</td><td class="n">${ar(k.hi)}</td><td class="n">${ar(k.mid)}</td><td class="n">${ar(k.low)}</td><td class="n">${ar(k.none)}</td><td class="n">${a==null?'—':ar(a)}</td><td class="n">${d==null?'—':ar(d)+'٪'}</td></tr>`}).join('')}
+   <tr class="tot"><td>المجموع</td><td class="n">${ar(all.length)}</td><td class="n">${ar(C.hi)}</td><td class="n">${ar(C.mid)}</td><td class="n">${ar(C.low)}</td><td class="n">${ar(C.none)}</td><td class="n">${avg(all)==null?'—':ar(avg(all))}</td><td class="n">${done(all)==null?'—':ar(done(all))+'٪'}</td></tr></tbody></table>
+   ${st.length?`<h3>الإنجاز في الدروس (للطالبات اللاتي بدأن الدرس)</h3><table class="rtable"><tbody>${lessonPct.map(x=>`<tr><td>الدرس ${ar(x.l.n)}: ${esc(x.l.title)}</td><td style="width:40%"><div class="bar"><i style="width:${x.p||0}%"></i></div></td><td class="n">${x.p==null?'لم يبدأ بعد':ar(x.p)+'٪ · '+ar(x.n)+' طالبة'}</td></tr>`).join('')}</tbody></table>`:''}
+   ${hard.length?`<h3>المهام الأصعب (الأقل نجاحاً من المحاولة الأولى)</h3><ol>${hard.map(x=>`<li>الدرس ${ar(x.t.L)} · ${esc(x.t.title)} — ${ar(Math.round(x.diff*100))}٪ لم ينجحن من أول محاولة (${ar(x.s)} طالبة)</li>`).join('')}</ol>`:''}
+   <h3>التوصيات</h3><ul>
+    <li><b style="color:${ACH_LV.hi[1]}">المجيدات (${ar(C.hi)}):</b> فتح «المستوى المتقدم 🚀» والتحديات الاختيارية، وتكليفهن بدور «الخبيرة» لدعم زميلاتهن في العمل الثنائي.</li>
+    <li><b style="color:#b38f00">المتوسطات (${ar(C.mid)}):</b> مراجعة المهام التي احتجن فيها لأكثر من محاولة، والعمل الثنائي مع مجيدة، وتشجيعهن على التحديات لرفع المستوى.</li>
+    <li><b style="color:${ACH_LV.low[1]}">المتدنيات (${ar(C.low)}):</b> تفعيل «مسار الدعم 🌱» (وقت أطول وتلميح مجاني)، وإعادة شرح ${hard[0]?'«'+esc(hard[0].t.title)+'»':'المهام الأصعب'} بأمثلة، ومتابعة فردية في الحصة.</li>
+    ${C.none?`<li><b style="color:var(--muted)">لم تبدأن (${ar(C.none)}):</b> التأكد من دخولهن المنصة باسمهن من القائمة وبرمز الدرس في الحصة القادمة.</li>`:''}</ul>
+   <h3 class="achh">الطالبات حسب المستوى</h3>
+   ${cls.map(c=>{const l=D[c];return `<section class="achcls"><h4>${esc(c)}</h4><div class="achcols">${['hi','mid','low','none'].map(k=>`<div><b style="border-color:${ACH_LV[k][1]}">${ACH_LV[k][0]} (${ar(l.filter(s=>s.lv===k).length)})</b><ul>${names(l,k)}</ul></div>`).join('')}</div></section>`}).join('')}
+   <footer class="repsign"><span>توقيع المعلمة: ...................</span><span>اعتماد مديرة المدرسة: ...................</span></footer>
+  </article>`;
+  $('#achPrint').onclick=()=>{document.body.classList.add('printrep','printach');setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('printrep','printach'),400)},60)};
+  $('#achAll').onclick=()=>{const ids=all.filter(s=>s.id).map(s=>s.id);if(!ids.length){toast('استوردي كشوف الصفوف أولاً لإصدار التقارير الفردية.');return}openReport(ids)};
+  $('#achCsv').onclick=()=>{const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';const head=['الصف','الطالبة','المستوى','النقاط','من','النسبة %','الدرجة من 20','المهام المنجزة',...L5.map(l=>'الدرس '+l.n),'آخر نشاط'];
+    const rows=cls.flatMap(c=>D[c].map(s=>{const r=s.r;return [c,s.n,ACH_LV[s.lv][0],r?r.points:'',r?r.max:'',r?pctOf(r):'',r?r.grade20:'',r?r.tasksDone+'/'+r.tasks:'',...L5.map(l=>{const e=r&&(r.lessons||[]).find(z=>z.n===l.n);return e?e.points+'/'+e.max:''}),r&&r.sentAt?new Date(r.sentAt).toLocaleString('ar-OM'):'']}));
+    dlFile('تقرير_إنجاز_الصف_العاشر.csv','﻿'+[head,...rows].map(r=>r.map(q).join(',')).join('\r\n'),'text/csv;charset=utf-8')}}
 
-const BUILD_ID='ad0a6834cc';
+
+const BUILD_ID='bf0bae8296';
 (function(){let shown=false;async function chk(){if(shown)return;try{const t=await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/BUILD_ID='([0-9a-f]+)'/);if(m&&m[1]!==BUILD_ID){shown=true;const d=document.createElement('div');d.className='updbar';d.setAttribute('dir','rtl');d.innerHTML='✨ توجد نسخة أحدث من المنصة. <button type="button">تحديث الآن</button>';d.querySelector('button').onclick=()=>{location.href=location.pathname+'?v='+m[1]};document.body.appendChild(d)}}catch(e){}}
 setTimeout(chk,4000);setInterval(chk,180000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
 /* ================= INIT ================= */
